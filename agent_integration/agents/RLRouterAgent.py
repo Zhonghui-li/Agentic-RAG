@@ -98,6 +98,40 @@ def _teacher_rule_action(metrics_like: Dict[str, float]) -> str:
         return "end"
     return "regenerate"
 
+def _teacher_rule_action_v2(metrics_like: Dict[str, float]) -> str:
+    """
+    Recalibrated teacher rule (v2):
+    - semF1 checked FIRST as primary gate (requires ground truth)
+    - rel threshold lowered 0.40 → 0.22 (based on actual pipeline distribution p25=0.202)
+    - faith/noise thresholds slightly relaxed
+    """
+    def f(*names, default=0.0):
+        for n in names:
+            if n in metrics_like:
+                return _safe_float(metrics_like[n], default)
+        return default
+
+    ctxR  = f("context_recall", "ctxR", default=0.0)
+    rel   = f("response_relevancy", "answer_relevancy", default=0.0)
+    faith = f("faithfulness_score", "faith", "faithfulness", default=0.0)
+    noise = f("noise_sensitivity", "noise", default=1.0)
+    semf1 = f("semantic_f1_score", "semantic_f1", default=0.0)
+
+    # 1. semF1 primary gate — if answer is already good, stop
+    if semf1 >= 0.70:
+        return "end"
+    # 2. retrieval complete failure
+    if ctxR <= 1e-6:
+        return "requery"
+    # 3. recalibrated rel threshold (actual p25 = 0.202)
+    if rel < 0.22:
+        return "requery"
+    # 4. generation quality poor
+    if (faith < 0.50) or (noise > 0.70):
+        return "regenerate"
+    return "regenerate"
+
+
 def _minmax_norm(x: torch.Tensor, fmin: torch.Tensor, fmax: torch.Tensor) -> torch.Tensor:
     denom = torch.clamp(fmax - fmin, min=1e-6)
     return (x - fmin) / denom
@@ -279,7 +313,7 @@ class RLRouterAgent:
     def __init__(self, policy_path: Optional[str] = None, device: str = "cpu", logger=None):
         self.device = device
         self.logger = logger
-        self.policy = RouterPolicyNet().to(self.device)
+        self._idx2action = IDX2ACTION          # default 3-action; overridden if ckpt has num_actions=2
 
         self.feat_min: Optional[torch.Tensor] = None  # [1, D]
         self.feat_max: Optional[torch.Tensor] = None  # [1, D]
@@ -289,26 +323,35 @@ class RLRouterAgent:
         # ==== 新增：用环境变量控制模式 ====
         # ROUTER_MODE 可选： "off" / "teacher" / "bc"
         self.mode = os.getenv("ROUTER_MODE", "bc").lower()
-        if self.mode not in ("off", "teacher", "bc"):
+        if self.mode not in ("off", "teacher", "teacher_v2", "bc"):
             self.mode = "bc"
 
         # ---- off 模式：router 存在，但永远直接 end ----
         if self.mode == "off":
             print("🧠 RLRouterAgent in OFF mode (ROUTER_MODE=off): always choose 'end'.")
+            self.policy = RouterPolicyNet().to(self.device)
             self.policy.eval()
             return
 
         # ---- teacher 模式：完全不用 BC policy，只走教师规则 ----
-        if self.mode == "teacher":
-            print("🧠 RLRouterAgent in TEACHER-RULE mode (ROUTER_MODE=teacher); ignore policy file.")
+        if self.mode in ("teacher", "teacher_v2"):
+            label = "TEACHER-RULE v2 (recalibrated)" if self.mode == "teacher_v2" else "TEACHER-RULE"
+            print(f"🧠 RLRouterAgent in {label} mode; ignore policy file.")
+            self.policy = RouterPolicyNet().to(self.device)
             self.policy.eval()
             return
 
         # ---- bc 模式：正常加载 policy, 失败则回退 teacher rule----
         if policy_path and os.path.exists(policy_path):
             ckpt = torch.load(policy_path, map_location=self.device)
+            # Support 2-action checkpoints
+            num_actions = ckpt.get("num_actions", 3)
+            self.policy = RouterPolicyNet(num_actions=num_actions).to(self.device)
+            # Build idx2action from checkpoint's action2idx if present
+            if "action2idx" in ckpt:
+                self._idx2action = {v: k for k, v in ckpt["action2idx"].items()}
             state_dict = ckpt.get("state_dict", ckpt)
-            self.policy.load_state_dict(state_dict, strict=False)
+            self.policy.load_state_dict(state_dict, strict=True)
 
             if "feat_min" in ckpt and "feat_max" in ckpt:
                 self.feat_min = ckpt["feat_min"].to(self.device).float()
@@ -316,10 +359,11 @@ class RLRouterAgent:
             else:
                 print("⚠️ No feat_min/feat_max in checkpoint; will fall back to clamp(0..1).")
 
-            print(f"Loaded router policy from {policy_path}")
+            print(f"Loaded router policy from {policy_path} (num_actions={num_actions})")
             self._has_policy = True                     # ✅ 成功加载
         else:
             # 不存在或未提供 policy_path
+            self.policy = RouterPolicyNet().to(self.device)
             if policy_path:
                 print(f"⚠️ Router policy not found at: {policy_path}; will fallback to teacher rules.")
             else:
@@ -357,18 +401,33 @@ class RLRouterAgent:
                 self.logger.set_router_action(action)
             return action
 
-        # 2) teacher 模式 或 没有成功加载 policy：用教师规则
-        if self.mode == "teacher" or not getattr(self, "_has_policy", False):
-            if self.mode == "teacher":
+        # 2) teacher / teacher_v2 模式 或 没有成功加载 policy
+        if self.mode in ("teacher", "teacher_v2") or not getattr(self, "_has_policy", False):
+            if self.mode == "teacher_v2":
+                print("[router.decide] ROUTER_MODE=teacher_v2 → teacher_rule_v2 (recalibrated)")
+                a = _teacher_rule_action_v2(state)
+            elif self.mode == "teacher":
                 print("[router.decide] ROUTER_MODE=teacher → teacher_rule")
+                a = _teacher_rule_action(state)
             else:
                 print("[router.decide] no loaded policy → fallback teacher_rule")
-            a = _teacher_rule_action(state)
+                a = _teacher_rule_action(state)
             if self.logger:
                 self.logger.set_router_action(a)
             return a
 
-        # 3) bc 模式 + 已有 policy：用 MLP policy
+        # 3) bc 模式 + 已有 policy：先检查 hybrid hard gate，再用 MLP policy
+        # Hybrid gate: if answer is already decent, end regardless of policy
+        # Prevents BC policy from over-triggering regenerate/requery on good answers
+        semf1_now = _safe_float(state.get("semantic_f1_score", state.get("semantic_f1", 0.0)))
+        semf1_gate = float(os.getenv("ROUTER_SEMF1_GATE", "0.55"))
+        if semf1_now >= semf1_gate:
+            a = "end"
+            print(f"[router.decide] ROUTER_MODE=bc + HYBRID GATE semF1={semf1_now:.3f}>={semf1_gate} → end")
+            if self.logger:
+                self.logger.set_router_action(a)
+            return a
+
         with torch.no_grad():
             x = self._featurize(state)
             logits = self.policy(x)
@@ -379,11 +438,86 @@ class RLRouterAgent:
                 probs = torch.softmax(logits / max(1e-6, float(temperature)), dim=-1).squeeze(0).cpu().numpy()
                 action_idx = int(probs.argmax())
 
-        a = IDX2ACTION.get(action_idx, "end")
-        print(f"[router.decide] ROUTER_MODE=bc + BC POLICY action={a} (idx={action_idx})")
+        a = self._idx2action.get(action_idx, "end")
+        print(f"[router.decide] ROUTER_MODE=bc + BC POLICY action={a} (idx={action_idx}, n_actions={len(self._idx2action)})")
         if self.logger:
             self.logger.set_router_action(a)
         return a
+
+
+def train_router_2action(
+    traj_dir: str = TRAJ_DIR,
+    epochs: int = 30,
+    batch_size: int = 8,
+    lr: float = 1e-3,
+    save_path: str = POLICY_SAVE_PATH,
+    device: str = "cpu"
+):
+    """
+    2-action variant: requery is merged into regenerate.
+    Action space: {end=0, regenerate=1}
+    Suitable for pipelines with strong retrieval where requery is counterproductive.
+    """
+    ACTION2IDX_2 = {"end": 0, "regenerate": 1}
+    IDX2ACTION_2 = {0: "end", 1: "regenerate"}
+
+    # Load trajectories, remap requery → regenerate
+    dataset_3 = RouterTrajectoryDataset(traj_dir)
+    remapped = []
+    for feats, label in dataset_3.samples:
+        action_name = IDX2ACTION.get(int(label), "end")
+        if action_name == "requery":
+            action_name = "regenerate"  # merge requery into regenerate
+        remapped.append((feats, ACTION2IDX_2[action_name]))
+
+    labels_all = torch.tensor([r[1] for r in remapped], dtype=torch.long)
+    counts = torch.bincount(labels_all, minlength=2).clamp(min=1)
+    print(f"[train_2action] class counts: " + ", ".join(f"{IDX2ACTION_2[i]}={int(c)}" for i, c in enumerate(counts)))
+
+    all_feats = torch.stack([torch.tensor(r[0], dtype=torch.float32) for r in remapped])
+    feat_min = all_feats.min(dim=0, keepdim=True).values
+    feat_max = all_feats.max(dim=0, keepdim=True).values
+    norm_feats = _minmax_norm(all_feats, feat_min, feat_max)
+
+    class _DS2(torch.utils.data.Dataset):
+        def __init__(self, f, l): self._f = f; self._l = l
+        def __len__(self): return self._f.size(0)
+        def __getitem__(self, i): return self._f[i], self._l[i]
+
+    ds = _DS2(norm_feats, labels_all)
+    class_weights = 1.0 / counts.float()
+    sample_weights = class_weights[labels_all]
+    sampler = WeightedRandomSampler(sample_weights, num_samples=len(ds), replacement=True)
+    loader = DataLoader(ds, batch_size=batch_size, sampler=sampler)
+
+    model = RouterPolicyNet(num_actions=2).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+
+    model.train()
+    for epoch in range(epochs):
+        total_loss = 0.0; total_correct = 0; total_seen = 0
+        for feats, actions in loader:
+            feats, actions = feats.to(device), actions.to(device)
+            logits = model(feats)
+            loss = criterion(logits, actions)
+            optimizer.zero_grad(); loss.backward(); optimizer.step()
+            total_loss += loss.item() * feats.size(0)
+            pred = torch.argmax(logits, dim=-1)
+            total_correct += (pred == actions).sum().item()
+            total_seen += actions.numel()
+        print(f"Epoch {epoch+1}/{epochs} - Loss: {total_loss/max(1,total_seen):.4f} - Acc: {total_correct/max(1,total_seen):.4f}")
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    torch.save({
+        "state_dict": model.state_dict(),
+        "feat_min": feat_min.cpu(),
+        "feat_max": feat_max.cpu(),
+        "feature_keys": FEATURE_KEYS,
+        "action2idx": ACTION2IDX_2,
+        "num_actions": 2,
+    }, save_path)
+    print(f"✅ 2-action policy saved to {save_path}")
 
 
 # =========================
