@@ -148,6 +148,60 @@ ctxR >=0.8:  63.3%  →  73.3%  (+10.0pp)
 - Carefully budgeted at ~150 tokens each to fit within the 2048-token prompt limit
 - semF1: 0.672 → 0.705 (+4.9%), semF1≥0.8: 70.0% → 73.3%
 
+---
+
+## RL Router Experiments
+
+After reaching semF1=0.705 via pipeline optimization, we added a learned routing layer to dynamically decide whether to accept or regenerate each answer. The router is trained in two stages: **Behavior Cloning (BC)** followed by **PPO reinforcement learning**.
+
+### Router Design
+
+- **State**: 6 RAGAS metrics (faithfulness, response relevancy, noise sensitivity, context precision, context recall, semantic F1)
+- **Action space**: `end` (accept answer) / `regenerate` (retry with failure diagnosis)
+- **Regenerate mechanism**: Diagnoses failure mode from RAGAS metrics (hallucination / off-topic / noise-misled), injects the diagnosis and previous wrong answer into the prompt as explicit correction signal
+- **Requery removed**: IRCoT already handles iterative retrieval internally; router-level requery was found to hurt context recall
+
+### BC Router (SFT Stage)
+
+Teacher rule labels router decisions on collected trajectories; a small MLP imitates these decisions.
+
+| Configuration | semF1 | Notes |
+|---------------|-------|-------|
+| No router (0.705 pipeline) | 0.705 | Baseline |
+| + Teacher Rule v1 | 0.700 | rel threshold (0.40) miscalibrated — almost all questions trigger requery |
+| + Teacher Rule v2 (recalibrated) | 0.643 | Lowered threshold (0.22); still over-intervenes |
+| + BC Router v2 (retrained on new trajectories) | 0.615 | BC inherits teacher's systematic bias |
+| + BC Router v3 (2-action, no requery) | 0.561 | Policy over-regenerates (89/90×) |
+
+**Root cause**: Teacher rule thresholds calibrated on the weak pipeline (0.416 era) fire too aggressively on the optimized 0.705 pipeline. BC faithfully inherits this bias. BC's ceiling = teacher's judgment quality.
+
+### PPO Router (RL Stage)
+
+PPO learns directly from real semF1 rewards, bypassing teacher label bias. BC policy serves as warm-start to avoid destructive random exploration.
+
+```bash
+PYTHONPATH=agent_integration LIGHT_MODE=1 \
+FAISS_PATH_OPENAI=vectorstore-hotpot/hotpotqa_faiss_v3 \
+EMB_MODEL=text-embedding-3-large \
+python3 agent_integration/agents/ppo_router_trainer.py \
+  --dataset agent_integration/data-hotpot/dev_real.jsonl \
+  --init_policy agent_integration/agents/router_policy_v3.pt \
+  --out_dir agent_integration/runs/ppo_router \
+  --n_iter 20 --max_regen 2
+```
+
+| Configuration | semF1 | vs BC |
+|---------------|-------|-------|
+| BC Router v3 | 0.561 | — |
+| **PPO Router** | **0.623** | **+6.2%** |
+| No router | 0.705 | — |
+
+**PPO corrects BC's over-regeneration** (+6.2% vs BC) but remains below the no-router baseline. Root causes: ~25% of questions fail due to retrieval (wrong documents → regenerate can't help); sparse reward signal (approx_kl ≈ 0, policy barely updated); 30-question training set limits convergence.
+
+**Key finding**: The true bottleneck is retrieval quality (~25% hard retrieval failures), not routing policy. Future directions: smarter requery with failure-conditioned query reformulation; larger training set; better teacher rule calibration for cleaner BC initialization.
+
+---
+
 ### Metric Definitions
 
 | Metric | Description |
@@ -248,7 +302,8 @@ agent_rl/
 │   │   ├── generation_agent.py     # CoT generation + answer extraction
 │   │   ├── evaluation_agent.py     # Ragas-based quality metrics
 │   │   ├── langgraph_rag.py        # LangGraph state-machine orchestrator
-│   │   └── RLRouterAgent.py        # RL/BC policy router
+│   │   ├── RLRouterAgent.py        # RL/BC policy router (BC + PPO, 2-action)
+│   │   └── ppo_router_trainer.py  # PPO online training for router
 │   ├── data-hotpot/                # HotpotQA evaluation dataset
 │   ├── runs/                       # Experiment trajectories & stats
 │   ├── scripts/                    # Vectorstore build scripts

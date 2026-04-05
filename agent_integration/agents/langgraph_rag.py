@@ -83,10 +83,14 @@ def create_rag_graph(
     retrieval_agent: RetrievalAgent,
     reasoning_agent: ReasoningAgent,
     generation_agent: GenerationAgent,
-    evaluation_agent: EvaluationAgent
+    evaluation_agent: EvaluationAgent,
+    rl_router: Optional["RLRouterAgent"] = None,
 ):
-    # 初始化 RL 路由策略
-    _rl_router = RLRouterAgent(policy_path=os.path.join(os.path.dirname(__file__), 'router_policy.pt'))
+    # 初始化 RL 路由策略（优先使用传入的 router 实例，回退到默认路径）
+    if rl_router is not None:
+        _rl_router = rl_router
+    else:
+        _rl_router = RLRouterAgent(policy_path=os.path.join(os.path.dirname(__file__), 'router_policy.pt'))
 
     # 注入统一 logger（若外部未注入）
     def _ensure_logger_on_state(state: AgentState) -> Optional[TrajectoryLogger]:
@@ -337,11 +341,35 @@ def create_rag_graph(
         logger = _ensure_logger_on_state(state)
 
         try:
-            # ⚠️ 使用“用户问题”来生成答案；refined_query 只用于检索
+            # ⚠️ 使用"用户问题"来生成答案；refined_query 只用于检索
             question = state["question"]
             docs = state["docs"]
             reference = state.get("reference")
-            print(f"\n✍️ Generate answer... (use original question)")
+
+            # --- Router-level regenerate feedback ---
+            regenerate_count = state.get("regenerate_count", 0)
+            previous_answer = state.get("answer") if regenerate_count > 0 else None
+            failure_hint = None
+            if previous_answer:
+                faith = float(state.get("faithfulness_score") or 0.0)
+                rel   = float(state.get("response_relevancy") or 0.0)
+                noise = float(state.get("noise_sensitivity") or 1.0)
+                semf1 = float(state.get("semantic_f1_score") or 0.0)
+                if faith < 0.5:
+                    failure_hint = ("Your previous answer contains claims not directly supported "
+                                    "by the retrieved documents. Stick strictly to what the documents say.")
+                elif noise > 0.7:
+                    failure_hint = ("Your previous answer was influenced by irrelevant documents. "
+                                    "Identify which documents are actually relevant to the question.")
+                elif rel < 0.3:
+                    failure_hint = ("Your previous answer does not directly address the question. "
+                                    "Focus on answering exactly what was asked.")
+                else:
+                    failure_hint = ("Re-examine the context carefully. "
+                                    "Make sure your answer is concise and factually grounded.")
+                print(f"\n✍️ Generate answer... (regenerate #{regenerate_count}, feedback injected)")
+            else:
+                print(f"\n✍️ Generate answer... (use original question)")
             print(f"🧪 Reference in generator: {reference}")
 
             start = time.time()
@@ -349,7 +377,9 @@ def create_rag_graph(
                 question=question,
                 docs=docs,
                 evaluation_agent=evaluation_agent,
-                ground_truth=reference
+                ground_truth=reference,
+                previous_answer=previous_answer,
+                failure_hint=failure_hint,
             )
             duration = time.time() - start
 
@@ -733,7 +763,7 @@ def run_rag_pipeline(
     if use_router:
         print("🚦 Using LangGraph StateGraph with router")
         try:
-            graph = create_rag_graph(retrieval_agent, reasoning_agent, generation_agent, evaluation_agent)
+            graph = create_rag_graph(retrieval_agent, reasoning_agent, generation_agent, evaluation_agent, rl_router=router)
             if visualize and graph is not None:
                 try:
                     from IPython.display import display

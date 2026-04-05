@@ -206,9 +206,9 @@ def main():
         embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
         vectorstore_path = os.getenv("FAISS_PATH_LOCAL", "vectorstore-hotpot/hf-miniLM-faiss")
     else:
-        print("🧠 Embeddings: OpenAI (text-embedding-ada-002, dim=1536) — must match your existing FAISS index.")
+        print("🧠 Embeddings: OpenAI (text-embedding-3-large, dim=3072) — must match your existing FAISS index.")
         embeddings = OpenAIEmbeddings(
-            model=os.getenv("EMB_MODEL", "text-embedding-ada-002"),
+            model=os.getenv("EMB_MODEL", "text-embedding-3-large"),
             api_key=OPENAI_API_KEY_REAL or os.getenv("OPENAI_API_KEY"),
             base_url="https://api.openai.com/v1",
         )

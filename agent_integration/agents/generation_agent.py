@@ -347,15 +347,22 @@ class GenerationAgent:
         return trim_text_to_token_limit(combined, max_tokens=max_tokens, model="gpt-3.5-turbo")
 
     # ---- 生成提示 ----
-    def _build_prompt(self, question: str, context: str, attempt: int) -> str:
-        instructions = """
+    def _build_prompt(self, question: str, context: str, attempt: int,
+                      previous_answer: Optional[str] = None,
+                      failure_hint: Optional[str] = None,
+                      force_answer: bool = False) -> str:
+        if force_answer:
+            rule4 = "4. Always produce your best guess answer based on available context. Never say 'insufficient context' or refuse to answer."
+        else:
+            rule4 = "4. If the context does not contain enough information, respond with: Answer: insufficient context"
+        instructions = f"""
 You are a precise QA system. Answer questions using ONLY the retrieved context below.
 
 RULES:
 1. First, write a brief REASONING (1-3 sentences) that connects facts from the documents to derive the answer. Cite <Document N> when referencing information.
 2. Then, write your FINAL ANSWER on a new line starting with "Answer:". Give the shortest possible answer: a name, date, number, place, or short phrase.
 3. EVERY claim in your reasoning must come directly from the provided documents. Do NOT use external knowledge.
-4. If the context does not contain enough information, respond with: Answer: insufficient context
+{rule4}
 
 Examples:
 
@@ -381,6 +388,13 @@ Answer: <shortest factual answer>
             instructions += (
                 f"\n(Attempt #{attempt + 1}: Re-read the documents carefully. "
                 "Make sure your answer is directly supported by the context.)"
+            )
+        # Feedback from router-level regenerate: inject previous answer + diagnosis
+        if previous_answer and failure_hint:
+            instructions += (
+                f"\n\n[FEEDBACK] Your previous answer was: \"{previous_answer}\"\n"
+                f"Issue identified: {failure_hint}\n"
+                "Please produce a corrected answer addressing the issue above."
             )
 
         prompt = f"""
@@ -442,7 +456,10 @@ Answer (use Reasoning/Answer format):
         evaluation_agent,
         ground_truth: Optional[str] = None,
         max_attempts: int = 2,
-        prompt_id: str = "gen_v1"
+        prompt_id: str = "gen_v1",
+        previous_answer: Optional[str] = None,
+        failure_hint: Optional[str] = None,
+        force_answer: bool = False,
     ) -> Dict[str, Any]:
         """
         多次尝试 → 评估 → 早停；在评测失效/默认值时也会刷新 best_answer，避免返回空串。
@@ -495,7 +512,12 @@ Answer (use Reasoning/Answer format):
 
 
         for attempt in range(max_attempts):
-            prompt = self._build_prompt(question, context, attempt)
+            # On first attempt only: inject router-level feedback (previous answer + failure diagnosis)
+            pa = previous_answer if attempt == 0 else None
+            fh = failure_hint if attempt == 0 else None
+            prompt = self._build_prompt(question, context, attempt,
+                                        previous_answer=pa, failure_hint=fh,
+                                        force_answer=force_answer)
 
             # ---- 生成（健壮抽取 + 非空兜底）----
             try:

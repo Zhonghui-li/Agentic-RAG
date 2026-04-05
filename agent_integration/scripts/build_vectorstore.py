@@ -2,9 +2,11 @@ import os
 import re
 import json
 import argparse
+from dotenv import load_dotenv
+load_dotenv()
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 
 def split_text_by_sentence(text, chunk_size=300, chunk_overlap=50):
@@ -117,7 +119,8 @@ def create_vectorstore(json_path="data-hotpot/hotpot_mini_corpus.json",
 
     # 3. 建立Embedding和Vectorstore
     print("Embedding documents...")
-    embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+    emb_model = os.getenv("EMB_MODEL", "text-embedding-3-large")
+    embeddings = OpenAIEmbeddings(model=emb_model)
 
     vectorstore = FAISS.from_documents(docs, embeddings)
 

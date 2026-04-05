@@ -35,7 +35,7 @@ def get_vectorstore() -> Any:
     try:
         from langchain_community.vectorstores import FAISS
         from langchain_openai import OpenAIEmbeddings
-        emb_model = os.getenv("EMB_MODEL", "text-embedding-ada-002")
+        emb_model = os.getenv("EMB_MODEL", "text-embedding-3-large")
         embeddings = OpenAIEmbeddings(model=emb_model)
         # allow_dangerous_deserialization=True 是新版本需要的加载开关
         vs = FAISS.load_local(faiss_dir, embeddings, allow_dangerous_deserialization=True)
