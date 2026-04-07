@@ -91,6 +91,30 @@ par2:
 		--use_par2 1
 
 # ============================
+#  GPT-4o-mini experiments (force_answer=True: no "insufficient context" fallback)
+# ============================
+4omini-ircot-force:
+	@echo "=== GPT-4o-mini IRCoT + force_answer ==="
+	GEN_LLM_MODEL=gpt-4o-mini GEN_FORCE_ANSWER=1 EMB_MODEL=text-embedding-3-small \
+	$(PYTHON) -m agents.evaluate_dataset_real \
+		--dataset $(DATASET) \
+		--top_k $(TOPK) \
+		--gen_max_attempts $(ATTEMPTS) \
+		--out_dir runs/trajectories_4omini_ircot_force \
+		--use_router 1
+
+4omini-par2-force:
+	@echo "=== GPT-4o-mini PAR2 + force_answer ==="
+	GEN_LLM_MODEL=gpt-4o-mini GEN_FORCE_ANSWER=1 EMB_MODEL=text-embedding-3-small \
+	$(PYTHON) -m agents.evaluate_dataset_real \
+		--dataset $(DATASET) \
+		--top_k $(TOPK) \
+		--gen_max_attempts $(ATTEMPTS) \
+		--out_dir runs/trajectories_4omini_par2_force \
+		--use_router 1 \
+		--use_par2 1
+
+# ============================
 #  Step B: Train Router Policy (BC)
 # ============================
 train_router:

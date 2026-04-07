@@ -82,6 +82,9 @@ class GenerationAgent:
         max_gen_tokens = int(os.getenv("GEN_MAX_GEN_TOKENS", str(max_gen_tokens)))
         self.max_ctx_tokens = max_ctx_tokens
         self.max_gen_tokens = max_gen_tokens
+        # GEN_FORCE_ANSWER=1 → 强制模型给出答案，不允许返回 "insufficient context"
+        # 适用于 GPT-4o-mini 等严格遵循指令的模型
+        self.force_answer = os.getenv("GEN_FORCE_ANSWER", "0") == "1"
 
         if llm is not None:
             self.llm = llm
@@ -457,11 +460,15 @@ Answer (use Reasoning/Answer format):
         prompt_id: str = "gen_v1",
         previous_answer: Optional[str] = None,
         failure_hint: Optional[str] = None,
-        force_answer: bool = False,
+        force_answer: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """
         多次尝试 → 评估 → 早停；在评测失效/默认值时也会刷新 best_answer，避免返回空串。
         """
+        # force_answer: 显式传入优先，否则用实例默认（由 GEN_FORCE_ANSWER 环境变量控制）
+        if force_answer is None:
+            force_answer = self.force_answer
+
         # ---- 上下文兜底 ----
         context = self._trim_context(docs) if docs else "<NO_RETRIEVED_CONTEXT>"
 
