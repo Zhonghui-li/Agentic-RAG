@@ -174,7 +174,8 @@ def run_dataset_and_collect(
     retriever_top_k: int = 5,
     gen_max_attempts: int = 2,
     use_router: bool = False,
-    use_par2: bool = False,        # PAR2-RAG two-stage retrieval
+    use_par2: bool = False,        # PAR2-RAG two-stage retrieval (pure)
+    use_adaptive_retrieval: bool = False,  # IRCoT + PAR2 fallback router
     debug: bool = False,
 ):
     os.makedirs(out_dir, exist_ok=True)
@@ -236,6 +237,7 @@ def run_dataset_and_collect(
                 qid=qid,
                 use_router=use_router,
                 use_par2=use_par2,
+                use_adaptive_retrieval=use_adaptive_retrieval,
                 visualize=False,
                 gen_max_attempts=gen_max_attempts,
                 logger=traj_logger,
@@ -311,6 +313,12 @@ def parse_args():
         default=0,
         help="1 = enable PAR2-RAG two-stage retrieval (requires --use_router 1)"
     )
+    ap.add_argument(
+        "--use_adaptive_retrieval",
+        type=int,
+        default=0,
+        help="1 = IRCoT first, fall back to PAR2 when retrieval quality is poor (requires --use_router 1)"
+    )
     return ap.parse_args()
 
 def main():
@@ -347,6 +355,7 @@ def main():
         gen_max_attempts=args.gen_max_attempts,
         use_router=bool(args.use_router),
         use_par2=bool(args.use_par2),
+        use_adaptive_retrieval=bool(args.use_adaptive_retrieval),
         debug=args.debug,
     )
 

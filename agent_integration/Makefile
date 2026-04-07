@@ -114,6 +114,17 @@ par2:
 		--use_router 1 \
 		--use_par2 1
 
+4omini-adaptive:
+	@echo "=== GPT-4o-mini Adaptive (IRCoT + PAR2 fallback router) ==="
+	GEN_LLM_MODEL=gpt-4o-mini GEN_FORCE_ANSWER=1 EMB_MODEL=text-embedding-3-small \
+	$(PYTHON) -m agents.evaluate_dataset_real \
+		--dataset $(DATASET) \
+		--top_k $(TOPK) \
+		--gen_max_attempts $(ATTEMPTS) \
+		--out_dir runs/trajectories_4omini_adaptive \
+		--use_router 1 \
+		--use_adaptive_retrieval 1
+
 # ============================
 #  Step B: Train Router Policy (BC)
 # ============================
