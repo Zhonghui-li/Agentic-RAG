@@ -243,6 +243,8 @@ User Query
 
 All PAR2 runs use the same generation stack as the best pipeline (CoT prompt + 2 few-shot examples + hybrid BM25+FAISS+CrossEncoder retrieval). PAR2 **replaces only the IRCoT iterative loop** with its two-stage anchoring + ESC refinement.
 
+**GPT-3.5 ablation** (best pipeline = IRCoT + hybrid + CoT + few-shot):
+
 | Version | Retrieval | Generation | semF1 | semF1 ≥0.8 | ctxP | ctxR | noise |
 |---------|-----------|------------|-------|------------|------|------|-------|
 | Baseline | FAISS only | direct | 0.416 | 43.3% | 0.613 | 0.697 | 0.244 |
@@ -251,9 +253,20 @@ All PAR2 runs use the same generation stack as the best pipeline (CoT prompt + 2
 | PAR2 v1 (no dedup) | PAR2 + hybrid | CoT + few-shot | 0.560 | 56.7% | — | — | 0.144 |
 | PAR2 v2 (dedup + ctx eval) | PAR2 + hybrid | CoT + few-shot | 0.622 | 63.3% | 0.422 | 0.483 | 0.133 |
 
-**Fair comparison**: PAR2 v2 (0.622) vs best IRCoT pipeline (0.705) — PAR2 retrieval is currently weaker than IRCoT on this dataset. PAR2 does outperform IRCoT run in isolation (0.586) before CoT/few-shot were added, but the correct apples-to-apples comparison shows a gap.
+**GPT-4o-mini ablation** (same pipeline config, generation model swapped):
 
-> **Note on ctxP/ctxR**: PAR2 evaluates context on the merged C_anchor set (15-25 docs), while IRCoT evaluates on a focused top-5 set. Lower precision is expected with more docs — the higher semF1 confirms the relevant information is present.
+| Version | Model | semF1 | semF1 ≥0.8 | ctxP | ctxR | noise | insufficient |
+|---------|-------|-------|------------|------|------|-------|-------------|
+| IRCoT (best pipeline) | GPT-4o-mini | 0.571 | 56.7% | 0.696 | 0.672 | 0.394 | 8/30 |
+| PAR2 v2 | GPT-4o-mini | 0.572 | 60.0% | 0.453 | 0.511 | **0.139** | 9/30 |
+
+**Key findings:**
+- PAR2 v2 (0.622) vs best IRCoT pipeline (0.705) on GPT-3.5 — GPT-3.5's 4096-token limit truncates C_anchor (15-25 docs), leaving only 2-3 visible ("Lost in the Middle")
+- GPT-4o-mini PAR2 ≈ IRCoT (0.572 vs 0.571) — the bottleneck shifted: both have 8-9/30 questions returning "insufficient context" regardless of retrieval method
+- **Noise sensitivity improvement is consistent across models**: IRCoT 0.394 → PAR2 0.139 (-65%) on GPT-4o-mini, same as GPT-3.5
+- Next step: recalibrate generation prompt for GPT-4o-mini (remove "insufficient context" fallback)
+
+> **Note on ctxP/ctxR**: PAR2 evaluates context on the merged C_anchor set (15-25 docs), while IRCoT evaluates on a focused top-5 set. Lower ctxP is expected with more docs.
 
 ### Key Design Decisions
 

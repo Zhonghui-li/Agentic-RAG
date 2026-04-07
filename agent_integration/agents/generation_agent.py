@@ -77,11 +77,9 @@ class GenerationAgent:
         self.logger = logger
         self.semantic_f1_metric = semantic_f1_metric
 
-        # 轻量模式可通过环境变量覆盖
-        LIGHT_MODE = os.getenv("LIGHT_MODE", "0") == "1"
-        if LIGHT_MODE:
-            max_ctx_tokens = int(os.getenv("GEN_MAX_CTX_TOKENS", max_ctx_tokens))
-            max_gen_tokens = int(os.getenv("GEN_MAX_GEN_TOKENS", max_gen_tokens))
+        # 可通过环境变量覆盖（不依赖 LIGHT_MODE）
+        max_ctx_tokens = int(os.getenv("GEN_MAX_CTX_TOKENS", str(max_ctx_tokens)))
+        max_gen_tokens = int(os.getenv("GEN_MAX_GEN_TOKENS", str(max_gen_tokens)))
         self.max_ctx_tokens = max_ctx_tokens
         self.max_gen_tokens = max_gen_tokens
 
