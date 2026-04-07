@@ -83,6 +83,8 @@ class AgentState(TypedDict):
     refine_hop: int        # current Stage 2 hop counter
     par2_max_hops: int     # Stage 2 hop budget
     used_follow_ups: List[str]  # de-dup ESC follow-up queries
+    # Adaptive retrieval router
+    retrieval_quality: str  # "ok" | "poor" — set by retrieval_router_node
 
 
 def create_rag_graph(
@@ -92,6 +94,7 @@ def create_rag_graph(
     evaluation_agent: EvaluationAgent,
     rl_router: Optional["RLRouterAgent"] = None,
     use_par2: bool = False,
+    use_adaptive_retrieval: bool = False,
     par2_llm=None,
     par2_n_subqueries: int = 5,
     par2_max_hops: int = 4,
@@ -592,7 +595,7 @@ def create_rag_graph(
         }
 
     # ---- PAR2-RAG nodes (only built when use_par2=True) ----
-    _esc = EvidenceSufficiencyController(llm=par2_llm, max_hops=par2_max_hops) if use_par2 else None
+    _esc = EvidenceSufficiencyController(llm=par2_llm, max_hops=par2_max_hops) if (use_par2 or use_adaptive_retrieval) else None
 
     def anchor_node(state: AgentState) -> AgentState:
         """PAR2-RAG Stage 1: decompose question into sub-queries, retrieve all, merge into C_anchor."""
@@ -721,6 +724,31 @@ def create_rag_graph(
             }]
         }
 
+    # ---- Adaptive Retrieval Router ----
+    def retrieval_router_node(state: AgentState) -> AgentState:
+        """
+        轻量路由：检索后、生成前判断检索质量。
+        - doc_count == 0 或 ctxP < 0.2 → poor → 触发 PAR2 Stage 1 扩大召回
+        - 否则 → ok → 直接生成（IRCoT 路径，faithfulness 更高）
+        无需额外 LLM 调用，直接用已有指标。
+        """
+        docs = state.get("docs") or []
+        ctx_prec = state.get("context_precision") or 0.0
+        doc_count = len(docs)
+
+        if doc_count == 0 or ctx_prec < 0.2:
+            quality = "poor"
+            print(f"[RetrievalRouter] doc_count={doc_count}, ctxP={ctx_prec:.2f} → PAR2 fallback")
+        else:
+            quality = "ok"
+            print(f"[RetrievalRouter] doc_count={doc_count}, ctxP={ctx_prec:.2f} → generate")
+
+        logger = _ensure_logger_on_state(state)
+        if logger:
+            logger.add_reason(f"[retrieval_router] quality={quality} doc_count={doc_count} ctxP={ctx_prec:.2f}")
+
+        return {**state, "retrieval_quality": quality}
+
     # ---- 构建图 ----
     workflow = StateGraph(AgentState)
     workflow.add_node("query_optimizer", query_optimizer)
@@ -730,8 +758,38 @@ def create_rag_graph(
     workflow.add_node("requery_optimizer", requery_optimizer)
     workflow.add_node("finalizer", finalizer)
 
-    if use_par2:
-        # PAR2-RAG graph:
+    if use_adaptive_retrieval:
+        # Adaptive graph:
+        # IRCoT first → retrieval_router → ok: generator | poor: PAR2 fallback → generator
+        # query_optimizer → retriever → retrieval_router → {ok→generator, poor→anchor_node}
+        # anchor_node → refine_node ⟲ → generator → router → {end→finalizer, ...}
+        workflow.add_node("retrieval_router", retrieval_router_node)
+        workflow.add_node("anchor_node", anchor_node)
+        workflow.add_node("refine_node", refine_node)
+
+        workflow.add_edge("query_optimizer", "retriever")
+        workflow.add_edge("retriever", "retrieval_router")
+        workflow.add_conditional_edges(
+            "retrieval_router",
+            lambda st: st.get("retrieval_quality", "ok"),
+            {"ok": "generator", "poor": "anchor_node"}
+        )
+        workflow.add_edge("anchor_node", "refine_node")
+        workflow.add_conditional_edges(
+            "refine_node",
+            lambda st: st.get("next_step", "generate"),
+            {"refine": "refine_node", "generate": "generator"}
+        )
+        workflow.add_edge("generator", "router")
+        workflow.add_conditional_edges(
+            "router",
+            lambda st: st["next_step"],
+            {"end": "finalizer", "regenerate": "generator", "requery": "requery_optimizer"}
+        )
+        workflow.add_edge("requery_optimizer", "retriever")
+
+    elif use_par2:
+        # Pure PAR2-RAG graph (kept for backward compat):
         # query_optimizer → anchor_node → refine_node ⟲ → generator → router → finalizer
         workflow.add_node("anchor_node", anchor_node)
         workflow.add_node("refine_node", refine_node)
@@ -750,7 +808,7 @@ def create_rag_graph(
             {"end": "finalizer", "regenerate": "generator", "requery": "finalizer"}
         )
     else:
-        # Original graph
+        # Original IRCoT-only graph
         workflow.add_edge("query_optimizer", "retriever")
         workflow.add_edge("retriever", "generator")
         workflow.add_edge("generator", "router")
@@ -925,11 +983,13 @@ def run_rag_pipeline(
         print("🚦 Using LangGraph StateGraph with router")
         try:
             _use_par2 = bool(kwargs.get("use_par2", False))
+            _use_adaptive = bool(kwargs.get("use_adaptive_retrieval", False))
             _par2_llm = kwargs.get("par2_llm") or getattr(generation_agent, "llm", None)
             graph = create_rag_graph(
                 retrieval_agent, reasoning_agent, generation_agent, evaluation_agent,
                 rl_router=router,
                 use_par2=_use_par2,
+                use_adaptive_retrieval=_use_adaptive,
                 par2_llm=_par2_llm,
                 par2_n_subqueries=int(kwargs.get("par2_n_subqueries", 5)),
                 par2_max_hops=int(kwargs.get("par2_max_hops", 4)),
@@ -978,6 +1038,7 @@ def run_rag_pipeline(
             "refine_hop": 0,
             "par2_max_hops": int(kwargs.get("par2_max_hops", 4)),
             "used_follow_ups": [],
+            "retrieval_quality": "ok",
         }
 
 
