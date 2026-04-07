@@ -13,6 +13,8 @@ from agents.retrieval_agent import RetrievalAgent
 from agents.evaluation_agent import EvaluationAgent
 from agents.generation_agent import GenerationAgent
 from agents.RLRouterAgent import RLRouterAgent
+from agents.multi_query import decompose_query
+from agents.esc import EvidenceSufficiencyController
 
 # === NEW: policy router ===
 from agents.RLRouterAgent import RLRouterAgent, POLICY_SAVE_PATH
@@ -77,6 +79,10 @@ class AgentState(TypedDict):
     reference: Optional[str]
     qid: str
     logger: Optional[TrajectoryLogger]
+    # PAR2-RAG fields
+    refine_hop: int        # current Stage 2 hop counter
+    par2_max_hops: int     # Stage 2 hop budget
+    used_follow_ups: List[str]  # de-dup ESC follow-up queries
 
 
 def create_rag_graph(
@@ -85,6 +91,10 @@ def create_rag_graph(
     generation_agent: GenerationAgent,
     evaluation_agent: EvaluationAgent,
     rl_router: Optional["RLRouterAgent"] = None,
+    use_par2: bool = False,
+    par2_llm=None,
+    par2_n_subqueries: int = 5,
+    par2_max_hops: int = 4,
 ):
     # 初始化 RL 路由策略（优先使用传入的 router 实例，回退到默认路径）
     if rl_router is not None:
@@ -581,6 +591,136 @@ def create_rag_graph(
             },
         }
 
+    # ---- PAR2-RAG nodes (only built when use_par2=True) ----
+    _esc = EvidenceSufficiencyController(llm=par2_llm, max_hops=par2_max_hops) if use_par2 else None
+
+    def anchor_node(state: AgentState) -> AgentState:
+        """PAR2-RAG Stage 1: decompose question into sub-queries, retrieve all, merge into C_anchor."""
+        logger = _ensure_logger_on_state(state)
+        question = state["refined_query"] or state["question"]
+        reference = state.get("reference")
+
+        print(f"\n🔍 [PAR2 Stage 1] Decomposing: {question}")
+        try:
+            sub_queries = decompose_query(question, llm=par2_llm, n_subqueries=par2_n_subqueries)
+        except Exception as e:
+            print(f"⚠️ [PAR2 anchor] decompose failed ({e}), falling back to original query")
+            sub_queries = [question]
+
+        all_docs: List[Document] = []
+        seen_ids: set = set()
+
+        def _to_lc_doc(d) -> Document:
+            if isinstance(d, Document):
+                txt = (d.page_content or "")[:3000]
+                return Document(page_content=txt, metadata=d.metadata or {})
+            txt = ""
+            meta = {}
+            if isinstance(d, dict):
+                txt = d.get("page_content") or d.get("text") or d.get("content") or ""
+                meta = d.get("metadata") or {}
+            else:
+                txt = str(getattr(d, "page_content", "") or d)
+            return Document(page_content=txt[:3000], metadata=meta)
+
+        for sq in sub_queries:
+            result = cached_retrieve(sq, reference=reference)
+            for d in result.get("docs", []):
+                doc = _to_lc_doc(d)
+                doc_id = hash(doc.page_content[:128])
+                if doc_id not in seen_ids:
+                    seen_ids.add(doc_id)
+                    all_docs.append(doc)
+
+        print(f"✅ [PAR2 Stage 1] C_anchor: {len(all_docs)} unique docs from {len(sub_queries)} sub-queries")
+
+        # Evaluate merged C_anchor docs to get real ctxP/ctxR
+        ctxP, ctxR = 0.0, 0.0
+        if evaluation_agent is not None and reference and all_docs:
+            try:
+                eval_res = evaluation_agent.evaluate_retrieval(
+                    user_query=question, retrieved_docs=all_docs, reference=reference
+                )
+                ctxP = extract_scalar(eval_res.get("context_precision", 0.0) or 0.0)
+                ctxR = extract_scalar(eval_res.get("context_recall", 0.0) or 0.0)
+                print(f"📊 [PAR2 Stage 1] ctxP={ctxP:.3f}, ctxR={ctxR:.3f}")
+            except Exception as e:
+                print(f"⚠️ [PAR2 anchor eval] {e}")
+
+        if logger:
+            logger.add_reason(f"[anchor_node] {len(sub_queries)} sub-queries → {len(all_docs)} docs, ctxP={ctxP:.3f}, ctxR={ctxR:.3f}")
+
+        return {
+            **state,
+            "docs": all_docs,
+            "refine_hop": 0,
+            "par2_max_hops": par2_max_hops,
+            "used_follow_ups": [],
+            "context_precision": ctxP,
+            "context_recall": ctxR,
+            "messages": state["messages"] + [{
+                "role": "system",
+                "content": f"[PAR2 Stage 1] {len(all_docs)} docs anchored from {len(sub_queries)} sub-queries"
+            }]
+        }
+
+    def refine_node(state: AgentState) -> AgentState:
+        """PAR2-RAG Stage 2: ESC-gated iterative refinement. Loops back via conditional edge."""
+        logger = _ensure_logger_on_state(state)
+        question = state["question"]
+        docs = state["docs"]
+        hop = state.get("refine_hop", 0)
+        reference = state.get("reference")
+
+        action, follow_up = _esc.check(question=question, docs=docs, current_hop=hop)
+
+        if action == "STOP":
+            if logger:
+                logger.add_reason(f"[refine_node] hop={hop} ESC=STOP → generator")
+            return {**state, "next_step": "generate"}
+
+        # De-dup: if ESC repeats a follow-up we already tried, stop early
+        used_follow_ups = list(state.get("used_follow_ups") or [])
+        if follow_up in used_follow_ups:
+            print(f"[ESC] hop={hop} follow-up already tried → STOP (dedup)")
+            if logger:
+                logger.add_reason(f"[refine_node] hop={hop} ESC repeat query → STOP (dedup)")
+            return {**state, "next_step": "generate"}
+
+        # CONTINUE: retrieve follow-up query and merge
+        used_follow_ups.append(follow_up)
+        print(f"\n🔄 [PAR2 Stage 2] hop={hop+1} follow-up: {follow_up}")
+        result = cached_retrieve(follow_up, reference=reference)
+        new_docs = result.get("docs", [])
+
+        seen_ids = {hash((getattr(d, "page_content", "") or "")[:128]) for d in docs}
+        merged = list(docs)
+        for d in new_docs:
+            did = hash((getattr(d, "page_content", "") or "")[:128])
+            if did not in seen_ids:
+                seen_ids.add(did)
+                if isinstance(d, Document):
+                    merged.append(Document(page_content=(d.page_content or "")[:3000], metadata=d.metadata or {}))
+                else:
+                    txt = (d.get("page_content", "") if isinstance(d, dict) else str(d))[:3000]
+                    merged.append(Document(page_content=txt, metadata={}))
+
+        print(f"📚 [PAR2 Stage 2] hop={hop+1}: {len(merged)} total docs after merge")
+        if logger:
+            logger.add_reason(f"[refine_node] hop={hop+1} ESC=CONTINUE → {len(merged)} docs")
+
+        return {
+            **state,
+            "docs": merged,
+            "refine_hop": hop + 1,
+            "used_follow_ups": used_follow_ups,
+            "next_step": "refine",
+            "messages": state["messages"] + [{
+                "role": "system",
+                "content": f"[PAR2 Stage 2] hop={hop+1}, follow-up: {follow_up}, total docs: {len(merged)}"
+            }]
+        }
+
     # ---- 构建图 ----
     workflow = StateGraph(AgentState)
     workflow.add_node("query_optimizer", query_optimizer)
@@ -590,17 +730,38 @@ def create_rag_graph(
     workflow.add_node("requery_optimizer", requery_optimizer)
     workflow.add_node("finalizer", finalizer)
 
-    workflow.add_edge("query_optimizer", "retriever")
-    workflow.add_edge("retriever", "generator")
-    workflow.add_edge("generator", "router")
-    workflow.add_conditional_edges(
-        "router",
-        lambda st: st["next_step"],
-        {"end": "finalizer", "regenerate": "generator", "requery": "requery_optimizer"}
-    )
-    workflow.add_edge("requery_optimizer", "retriever")
-    workflow.add_edge("finalizer", END)
+    if use_par2:
+        # PAR2-RAG graph:
+        # query_optimizer → anchor_node → refine_node ⟲ → generator → router → finalizer
+        workflow.add_node("anchor_node", anchor_node)
+        workflow.add_node("refine_node", refine_node)
 
+        workflow.add_edge("query_optimizer", "anchor_node")
+        workflow.add_edge("anchor_node", "refine_node")
+        workflow.add_conditional_edges(
+            "refine_node",
+            lambda st: st.get("next_step", "generate"),
+            {"refine": "refine_node", "generate": "generator"}
+        )
+        workflow.add_edge("generator", "router")
+        workflow.add_conditional_edges(
+            "router",
+            lambda st: st["next_step"],
+            {"end": "finalizer", "regenerate": "generator", "requery": "finalizer"}
+        )
+    else:
+        # Original graph
+        workflow.add_edge("query_optimizer", "retriever")
+        workflow.add_edge("retriever", "generator")
+        workflow.add_edge("generator", "router")
+        workflow.add_conditional_edges(
+            "router",
+            lambda st: st["next_step"],
+            {"end": "finalizer", "regenerate": "generator", "requery": "requery_optimizer"}
+        )
+        workflow.add_edge("requery_optimizer", "retriever")
+
+    workflow.add_edge("finalizer", END)
     workflow.set_entry_point("query_optimizer")
     return workflow.compile()
 
@@ -763,7 +924,16 @@ def run_rag_pipeline(
     if use_router:
         print("🚦 Using LangGraph StateGraph with router")
         try:
-            graph = create_rag_graph(retrieval_agent, reasoning_agent, generation_agent, evaluation_agent, rl_router=router)
+            _use_par2 = bool(kwargs.get("use_par2", False))
+            _par2_llm = kwargs.get("par2_llm") or getattr(generation_agent, "llm", None)
+            graph = create_rag_graph(
+                retrieval_agent, reasoning_agent, generation_agent, evaluation_agent,
+                rl_router=router,
+                use_par2=_use_par2,
+                par2_llm=_par2_llm,
+                par2_n_subqueries=int(kwargs.get("par2_n_subqueries", 5)),
+                par2_max_hops=int(kwargs.get("par2_max_hops", 4)),
+            )
             if visualize and graph is not None:
                 try:
                     from IPython.display import display
@@ -805,6 +975,9 @@ def run_rag_pipeline(
             "reference": reference,
             "qid": qid,
             "logger": logger,
+            "refine_hop": 0,
+            "par2_max_hops": int(kwargs.get("par2_max_hops", 4)),
+            "used_follow_ups": [],
         }
 
 

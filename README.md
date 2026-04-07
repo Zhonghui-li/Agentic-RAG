@@ -202,6 +202,67 @@ python3 agent_integration/agents/ppo_router_trainer.py \
 
 ---
 
+## PAR2-RAG: Two-Stage Anchoring + Evidence Sufficiency Control
+
+Inspired by the PAR2-RAG paper (Mar 2026), we implemented a two-stage multi-hop retrieval strategy on top of our existing FAISS + BM25 + CrossEncoder stack, replacing IRCoT's single-query iterative loop.
+
+### Architecture
+
+```
+User Query
+    │
+    ▼
+┌──────────────────────────────────────┐
+│  Stage 1: Coverage Anchoring         │
+│  Decompose → 5 complementary         │
+│  sub-queries → retrieve all →        │
+│  merge into C_anchor (15-25 docs)    │
+└────────────────┬─────────────────────┘
+                 │
+                 ▼
+┌──────────────────────────────────────┐
+│  Stage 2: ESC-Gated Refinement       │
+│  EvidenceSufficiencyController       │
+│  → STOP (sufficient) or              │
+│    CONTINUE + follow-up query →      │
+│  retrieve + merge → repeat           │
+│  (max 4 hops, dedup follow-ups)      │
+└────────────────┬─────────────────────┘
+                 │
+                 ▼
+           GenerationAgent
+```
+
+**Component mapping** (our implementation → PAR2 paper):
+- Sub-query decomposition: `decompose_query()` in `multi_query.py`
+- Coverage anchoring: `anchor_node` in `langgraph_rag.py`
+- ESC: `EvidenceSufficiencyController` in `esc.py`
+- Refinement loop: `refine_node` in `langgraph_rag.py`
+
+### Ablation Results (n=30, HotpotQA dev set)
+
+| Version | semF1 | semF1 ≥0.8 | ctxP | ctxR | noise |
+|---------|-------|------------|------|------|-------|
+| Baseline | 0.416 | 43.3% | 0.613 | 0.697 | 0.244 |
+| IRCoT | 0.586 | 60.0% | 0.749 | 0.783 | 0.400 |
+| PAR2 v1 (no dedup) | 0.560 | 56.7% | — | — | 0.144 |
+| **PAR2 v2 (dedup + ctx eval)** | **0.622** | **63.3%** | **0.422** | **0.483** | **0.133** |
+
+> **Note on ctxP/ctxR**: PAR2 evaluates context on the merged C_anchor set (15-25 docs), while IRCoT evaluates on a focused top-5 set. Lower precision is expected with more docs — the higher semF1 confirms the relevant information is present.
+
+### Key Design Decisions
+
+- **ESC deduplication**: `refine_node` tracks used follow-up queries; if ESC repeats a query, STOP immediately instead of re-fetching cached results
+- **`requery → finalizer`**: In PAR2 mode the BC router's `requery` action routes to `finalizer` (accept), since Stage 2 already handles retrieval quality
+- **DSPy MIPRO disabled**: `ReasoningAgent(compile_on_init=False)` skips prompt optimization at eval time
+
+```bash
+# Run PAR2-RAG evaluation
+EMB_MODEL=text-embedding-3-small make par2
+```
+
+---
+
 ### Metric Definitions
 
 | Metric | Description |
@@ -298,10 +359,11 @@ agent_rl/
 │   │   ├── retrieval_agent.py      # FAISS/BM25 retrieval + retry logic
 │   │   ├── hybrid_retriever.py     # BM25 + FAISS + RRF fusion
 │   │   ├── reranker.py             # CrossEncoder reranking
-│   │   ├── multi_query.py          # LLM query expansion
+│   │   ├── multi_query.py          # LLM query expansion + sub-query decomposition
+│   │   ├── esc.py                  # Evidence Sufficiency Controller (PAR2-RAG Stage 2)
 │   │   ├── generation_agent.py     # CoT generation + answer extraction
 │   │   ├── evaluation_agent.py     # Ragas-based quality metrics
-│   │   ├── langgraph_rag.py        # LangGraph state-machine orchestrator
+│   │   ├── langgraph_rag.py        # LangGraph state-machine orchestrator + PAR2 nodes
 │   │   ├── RLRouterAgent.py        # RL/BC policy router (BC + PPO, 2-action)
 │   │   └── ppo_router_trainer.py  # PPO online training for router
 │   ├── data-hotpot/                # HotpotQA evaluation dataset

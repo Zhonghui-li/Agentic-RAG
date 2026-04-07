@@ -86,7 +86,7 @@ class ReasoningAgent:
     def __init__(self,
                  logger: Optional[TrajectoryLogger] = None,
                  dataset_path: str = "data-hotpot/hotpot_mini_corpus.json",
-                 compile_on_init: bool = True):
+                 compile_on_init: bool = False):
         import os, random
         self.logger = logger
 
