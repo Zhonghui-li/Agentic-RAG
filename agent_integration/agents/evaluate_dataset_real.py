@@ -173,7 +173,8 @@ def run_dataset_and_collect(
     out_dir: str = "runs/trajectories",
     retriever_top_k: int = 5,
     gen_max_attempts: int = 2,
-    use_router: bool = False,      # ✅ 新增参数
+    use_router: bool = False,
+    use_par2: bool = False,        # PAR2-RAG two-stage retrieval
     debug: bool = False,
 ):
     os.makedirs(out_dir, exist_ok=True)
@@ -233,12 +234,13 @@ def run_dataset_and_collect(
                 evaluation_agent=evaluation_agent,
                 reference=ref,
                 qid=qid,
-                use_router=use_router,   # ✅ 打开路由(BC router)
+                use_router=use_router,
+                use_par2=use_par2,
                 visualize=False,
                 gen_max_attempts=gen_max_attempts,
-                logger=traj_logger,                     # 把 logger 交给管道统一管理
+                logger=traj_logger,
                 router_device="cpu",
-                router_policy_path=policy_path,   # ✅ 用 env 控制
+                router_policy_path=policy_path,
 
             )
         except Exception as e:
@@ -300,8 +302,14 @@ def parse_args():
     ap.add_argument(
         "--use_router",
         type=int,
-        default=0,   # 0 = baseline（默认），1 = LangGraph+BC Router
+        default=0,
         help="1 = use LangGraph + BC router; 0 = linear baseline"
+    )
+    ap.add_argument(
+        "--use_par2",
+        type=int,
+        default=0,
+        help="1 = enable PAR2-RAG two-stage retrieval (requires --use_router 1)"
     )
     return ap.parse_args()
 
@@ -337,7 +345,8 @@ def main():
         out_dir=args.out_dir,
         retriever_top_k=args.top_k,
         gen_max_attempts=args.gen_max_attempts,
-        use_router=bool(args.use_router),   # ✅ 让 CLI 控制是否启用 router
+        use_router=bool(args.use_router),
+        use_par2=bool(args.use_par2),
         debug=args.debug,
     )
 

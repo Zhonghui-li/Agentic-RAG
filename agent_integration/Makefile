@@ -78,6 +78,19 @@ lg_bc_linear:
 		--use_router 1
 
 # ============================
+#  Mode 6: PAR2-RAG (two-stage anchoring + ESC refinement)
+# ============================
+par2:
+	@echo "=== Running PAR2-RAG (Stage1: anchor + Stage2: ESC refinement) ==="
+	$(PYTHON) -m agents.evaluate_dataset_real \
+		--dataset $(DATASET) \
+		--top_k $(TOPK) \
+		--gen_max_attempts $(ATTEMPTS) \
+		--out_dir runs/trajectories_par2 \
+		--use_router 1 \
+		--use_par2 1
+
+# ============================
 #  Step B: Train Router Policy (BC)
 # ============================
 train_router:
