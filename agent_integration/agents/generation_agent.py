@@ -360,19 +360,20 @@ class GenerationAgent:
 You are a precise QA system. Answer questions using ONLY the retrieved context below.
 
 RULES:
-1. First, write a brief REASONING (1-3 sentences) that connects facts from the documents to derive the answer. Cite <Document N> when referencing information.
+1. First, write a brief REASONING (1-3 sentences) that connects facts across documents to derive the answer. Cite <Document N> when referencing information.
 2. Then, write your FINAL ANSWER on a new line starting with "Answer:". Give the shortest possible answer: a name, date, number, place, or short phrase.
 3. EVERY claim in your reasoning must come directly from the provided documents. Do NOT use external knowledge.
+4. Use the EXACT wording from the documents — do not substitute abbreviations or paraphrases (e.g. write the full organization name, not a shortened form).
 {rule4}
 
 Examples:
 
-Question: What government position was held by the woman who portrayed Nora in "A Doll's House"?
+Question: Which organization presents the award that was won by the director of "Braveheart"?
 Context:
-<Document 1> A Doll's House is a 1973 film. It stars Claire Bloom as Nora.
-<Document 2> Claire Bloom served as a member of the British Academy of Film and Television Arts council.
-Reasoning: <Document 1> states Claire Bloom portrayed Nora in "A Doll's House". <Document 2> notes she served on the BAFTA council.
-Answer: BAFTA council member
+<Document 1> Braveheart is a 1995 film directed by Mel Gibson. Gibson won the Academy Award for Best Director for this film.
+<Document 2> The Academy Award is presented by the Academy of Motion Picture Arts and Sciences.
+Reasoning: <Document 1> states Mel Gibson directed "Braveheart" and won the Academy Award for Best Director. <Document 2> states this award is presented by the Academy of Motion Picture Arts and Sciences.
+Answer: Academy of Motion Picture Arts and Sciences
 
 Question: Which band has more members, Smash Mouth or Green Day?
 Context:
@@ -380,6 +381,13 @@ Context:
 <Document 2> Green Day is a punk rock band consisting of three members.
 Reasoning: <Document 1> says Smash Mouth has six members, while <Document 2> says Green Day has three. Six is more than three.
 Answer: Smash Mouth
+
+Question: What year was the university founded that the professor who discovered penicillin attended?
+Context:
+<Document 1> Alexander Fleming discovered penicillin in 1928. He studied at St Mary's Hospital Medical School in London.
+<Document 2> St Mary's Hospital Medical School was founded in 1854 and later merged with Imperial College London.
+Reasoning: <Document 1> states Alexander Fleming discovered penicillin and attended St Mary's Hospital Medical School. <Document 2> states that school was founded in 1854.
+Answer: 1854
 
 Format:
 Reasoning: <your brief chain of thought>
