@@ -241,12 +241,17 @@ User Query
 
 ### Ablation Results (n=30, HotpotQA dev set)
 
-| Version | semF1 | semF1 ≥0.8 | ctxP | ctxR | noise |
-|---------|-------|------------|------|------|-------|
-| Baseline | 0.416 | 43.3% | 0.613 | 0.697 | 0.244 |
-| IRCoT | 0.586 | 60.0% | 0.749 | 0.783 | 0.400 |
-| PAR2 v1 (no dedup) | 0.560 | 56.7% | — | — | 0.144 |
-| **PAR2 v2 (dedup + ctx eval)** | **0.622** | **63.3%** | **0.422** | **0.483** | **0.133** |
+All PAR2 runs use the same generation stack as the best pipeline (CoT prompt + 2 few-shot examples + hybrid BM25+FAISS+CrossEncoder retrieval). PAR2 **replaces only the IRCoT iterative loop** with its two-stage anchoring + ESC refinement.
+
+| Version | Retrieval | Generation | semF1 | semF1 ≥0.8 | ctxP | ctxR | noise |
+|---------|-----------|------------|-------|------------|------|------|-------|
+| Baseline | FAISS only | direct | 0.416 | 43.3% | 0.613 | 0.697 | 0.244 |
+| IRCoT (standalone) | IRCoT | direct | 0.586 | 60.0% | 0.749 | 0.783 | 0.400 |
+| **Best pipeline** | **IRCoT + hybrid** | **CoT + few-shot** | **0.705** | **73.3%** | — | — | — |
+| PAR2 v1 (no dedup) | PAR2 + hybrid | CoT + few-shot | 0.560 | 56.7% | — | — | 0.144 |
+| PAR2 v2 (dedup + ctx eval) | PAR2 + hybrid | CoT + few-shot | 0.622 | 63.3% | 0.422 | 0.483 | 0.133 |
+
+**Fair comparison**: PAR2 v2 (0.622) vs best IRCoT pipeline (0.705) — PAR2 retrieval is currently weaker than IRCoT on this dataset. PAR2 does outperform IRCoT run in isolation (0.586) before CoT/few-shot were added, but the correct apples-to-apples comparison shows a gap.
 
 > **Note on ctxP/ctxR**: PAR2 evaluates context on the merged C_anchor set (15-25 docs), while IRCoT evaluates on a focused top-5 set. Lower precision is expected with more docs — the higher semF1 confirms the relevant information is present.
 
