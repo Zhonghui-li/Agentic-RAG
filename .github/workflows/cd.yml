@@ -60,7 +60,7 @@ jobs:
             type=sha,prefix=
 
       - name: Build and push RAG Service
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./rag_service/Dockerfile
@@ -82,7 +82,7 @@ jobs:
             type=sha,prefix=
 
       - name: Build and push Backend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./LLM-logic/backend
           file: ./LLM-logic/backend/Dockerfile
@@ -104,7 +104,7 @@ jobs:
             type=sha,prefix=
 
       - name: Build and push Frontend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./LLM-logic/frontend
           file: ./LLM-logic/frontend/Dockerfile
