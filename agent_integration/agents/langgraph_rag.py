@@ -12,12 +12,10 @@ from agents.reasoning_agent import ReasoningAgent
 from agents.retrieval_agent import RetrievalAgent
 from agents.evaluation_agent import EvaluationAgent
 from agents.generation_agent import GenerationAgent
-from agents.RLRouterAgent import RLRouterAgent
+from agents.RLRouterAgent import RLRouterAgent, POLICY_SAVE_PATH
 from agents.multi_query import decompose_query
 from agents.esc import EvidenceSufficiencyController
-
-# === NEW: policy router ===
-from agents.RLRouterAgent import RLRouterAgent, POLICY_SAVE_PATH
+from agents.retrieval_router_bc import RetrievalRouterBC
 
 
 # 统一轨迹日志（兜底为 None）
@@ -725,23 +723,23 @@ def create_rag_graph(
         }
 
     # ---- Adaptive Retrieval Router ----
+    # BC retrieval router (lazy-loaded; falls back to hard rule if no policy)
+    _retrieval_router_bc = RetrievalRouterBC(
+        policy_path=os.path.join(os.path.dirname(__file__), "retrieval_router_policy.pt")
+    )
+
     def retrieval_router_node(state: AgentState) -> AgentState:
         """
-        轻量路由：检索后、生成前判断检索质量。
-        - doc_count == 0 或 ctxP < 0.2 → poor → 触发 PAR2 Stage 1 扩大召回
-        - 否则 → ok → 直接生成（IRCoT 路径，faithfulness 更高）
-        无需额外 LLM 调用，直接用已有指标。
+        BC 检索路由：检索后、生成前判断检索质量。
+        - 优先使用训练好的 BC 分类器（RetrievalRouterBC）
+        - 无 policy 时退化为硬规则：ctxP < 0.2 → poor
         """
         docs = state.get("docs") or []
-        ctx_prec = state.get("context_precision") or 0.0
+        ctx_prec = float(state.get("context_precision") or 0.0)
+        ctx_rec  = float(state.get("context_recall") or 0.0)
         doc_count = len(docs)
 
-        if doc_count == 0 or ctx_prec < 0.2:
-            quality = "poor"
-            print(f"[RetrievalRouter] doc_count={doc_count}, ctxP={ctx_prec:.2f} → PAR2 fallback")
-        else:
-            quality = "ok"
-            print(f"[RetrievalRouter] doc_count={doc_count}, ctxP={ctx_prec:.2f} → generate")
+        quality = _retrieval_router_bc.decide(ctxP=ctx_prec, ctxR=ctx_rec, doc_count=doc_count)
 
         logger = _ensure_logger_on_state(state)
         if logger:
