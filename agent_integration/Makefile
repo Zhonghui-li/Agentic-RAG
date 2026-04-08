@@ -1,7 +1,7 @@
 # ============================
 #  Global settings
 # ============================
-PYTHON = python
+PYTHON = ../venv/bin/python
 DATASET = data-hotpot/dev_real.jsonl
 
 # 默认 top_k & attempts
@@ -125,12 +125,28 @@ par2:
 		--use_router 1 \
 		--use_adaptive_retrieval 1
 
+
 # ============================
-#  Step B: Train Router Policy (BC)
+#  Step B: Train Router Policies (BC)
 # ============================
 train_router:
-	@echo "=== Training BC Router Policy: TRAJ_DIR=$(TRAJ_DIR) ==="
+	@echo "=== Training BC Router Policy (post-generation): TRAJ_DIR=$(TRAJ_DIR) ==="
 	$(PYTHON) -m agents.RLRouterAgent
+
+train_retrieval_router:
+	@echo "=== Training BC Retrieval Router (pre-generation: IRCoT vs PAR2) ==="
+	$(PYTHON) -m agents.retrieval_router_bc
+
+4omini-adaptive-bc:
+	@echo "=== GPT-4o-mini Adaptive + BC Retrieval Router ==="
+	GEN_LLM_MODEL=gpt-4o-mini GEN_FORCE_ANSWER=1 EMB_MODEL=text-embedding-3-small \
+	$(PYTHON) -m agents.evaluate_dataset_real \
+		--dataset $(DATASET) \
+		--top_k $(TOPK) \
+		--gen_max_attempts $(ATTEMPTS) \
+		--out_dir runs/trajectories_4omini_adaptive_bc \
+		--use_router 1 \
+		--use_adaptive_retrieval 1
 
 # ============================
 #  Clean all runs
