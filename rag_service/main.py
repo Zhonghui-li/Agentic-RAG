@@ -6,7 +6,7 @@ import sys
 import json
 import hashlib
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, List, Dict
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -91,10 +91,25 @@ PIPELINE_STAGE_LATENCY = Histogram(
 )
 
 
-def get_cache_key(question: str, use_router: bool) -> str:
-    """Generate a cache key from the question"""
-    content = f"{question.strip().lower()}:{use_router}"
+def get_cache_key(question: str, use_router: bool, history: List[Dict[str, str]] = []) -> str:
+    """Generate a cache key from the question and conversation history"""
+    history_str = json.dumps(history, ensure_ascii=False) if history else ""
+    content = f"{question.strip().lower()}:{use_router}:{history_str}"
     return f"rag:{hashlib.md5(content.encode()).hexdigest()}"
+
+
+def build_contextualized_question(question: str, history: List[Dict[str, str]]) -> str:
+    """Prepend recent conversation history to the question for multi-turn context."""
+    if not history:
+        return question
+    # Include last 3 turns (6 messages) to avoid context explosion
+    recent = history[-6:]
+    history_lines = []
+    for msg in recent:
+        role = "User" if msg.get("role") == "user" else "Assistant"
+        history_lines.append(f"{role}: {msg.get('content', '').strip()}")
+    history_block = "\n".join(history_lines)
+    return f"[Conversation so far]\n{history_block}\n\n[Current question]\n{question}"
 
 
 def get_cached_response(key: str) -> Optional[dict]:
@@ -123,6 +138,7 @@ def set_cached_response(key: str, response: dict) -> None:
 class QueryRequest(BaseModel):
     question: str
     use_router: bool = True  # Whether to use LangGraph router
+    history: List[Dict[str, str]] = []  # Conversation history: [{"role": "user"/"assistant", "content": "..."}]
 
 
 class QueryResponse(BaseModel):
@@ -274,7 +290,7 @@ async def health_check():
         try:
             _redis_client.ping()
             redis_connected = True
-        except:
+        except Exception:
             pass
     return {
         "status": "healthy",
@@ -337,7 +353,7 @@ async def query(request: QueryRequest):
 
     try:
         # Check cache first
-        cache_key = get_cache_key(request.question, request.use_router)
+        cache_key = get_cache_key(request.question, request.use_router, request.history)
         cached = get_cached_response(cache_key)
         if cached:
             print(f"Cache HIT for: {request.question[:50]}...")
@@ -354,10 +370,15 @@ async def query(request: QueryRequest):
         print(f"Cache MISS for: {request.question[:50]}...")
         CACHE_MISSES.inc()
 
+        # Build contextualized question from conversation history
+        pipeline_question = build_contextualized_question(request.question, request.history)
+        if request.history:
+            print(f"  - Using {len(request.history)} history messages for context")
+
         # Run pipeline with timing
         pipeline_start = time.time()
         result = run_rag_pipeline(
-            question=request.question,
+            question=pipeline_question,
             retrieval_agent=_agents["retrieval"],
             reasoning_agent=_agents["reasoning"],
             generation_agent=_agents["generation"],
@@ -407,8 +428,9 @@ async def query_stream(request: QueryRequest):
         import concurrent.futures
 
         # Check cache first
-        cache_key = get_cache_key(request.question, request.use_router)
+        cache_key = get_cache_key(request.question, request.use_router, request.history)
         cached = get_cached_response(cache_key)
+        pipeline_question = build_contextualized_question(request.question, request.history)
 
         if cached:
             # Stream cached response word by word
@@ -437,7 +459,7 @@ async def query_stream(request: QueryRequest):
                 result = await loop.run_in_executor(
                     pool,
                     lambda: run_rag_pipeline(
-                        question=request.question,
+                        question=pipeline_question,
                         retrieval_agent=_agents["retrieval"],
                         reasoning_agent=_agents["reasoning"],
                         generation_agent=_agents["generation"],
