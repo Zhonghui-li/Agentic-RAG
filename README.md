@@ -1,6 +1,6 @@
 # LLM Logic + Agentic RAG Integration
 
-A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Augmented Generation) pipeline, evaluated on [HotpotQA](https://hotpotqa.github.io/) multi-hop question answering.
+A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Augmented Generation) pipeline, evaluated on [HotpotQA](https://hotpotqa.github.io/) multi-hop question answering. semF1 improved from **0.416 → 0.755 (+81.5%)** through systematic retrieval, generation, and routing optimization.
 
 ## Full-Stack Architecture
 
@@ -65,9 +65,19 @@ A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Aug
                             ▼
                    ┌───────────────────┐
                    │  EvaluationAgent  │  Faithfulness / Relevancy / Semantic F1
-                   │  (early stop or   │  → accept or retry generation
-                   │   retry)          │
                    └────────┬──────────┘
+                            │  ctxP, ctxR, doc_count
+                            ▼
+                   ┌───────────────────┐
+                   │  Retrieval Router │  BC MLP: IRCoT OK or anchor-based fallback?
+                   └────────┬──────────┘
+                    ircot_ok │           │ par2_needed
+                             ▼           ▼
+                        Generator   Anchor-Based Two-Stage Retrieval
+                                    (5 sub-queries → ESC-gated refinement)
+                                         │
+                                         ▼
+                                     Generator
                             │
                             ▼
                       Final Answer
@@ -81,10 +91,13 @@ A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Aug
 | RetrievalAgent | `retrieval_agent.py` | FAISS dense retrieval + BM25 sparse retrieval, RRF fusion |
 | HybridRetriever | `hybrid_retriever.py` | BM25 + FAISS reciprocal rank fusion |
 | CrossEncoder Reranker | `reranker.py` | `cross-encoder/ms-marco-MiniLM-L-6-v2` reranking |
-| Multi-Query | `multi_query.py` | LLM-based query variant generation |
-| GenerationAgent | `generation_agent.py` | CoT prompt + few-shot examples + answer parsing + concise extraction |
+| Multi-Query | `multi_query.py` | LLM-based query variant generation + sub-query decomposition |
+| GenerationAgent | `generation_agent.py` | CoT prompt + few-shot examples + answer parsing |
 | EvaluationAgent | `evaluation_agent.py` | Ragas-based faithfulness, relevancy, noise sensitivity |
-| LangGraph Router | `langgraph_rag.py` | State-machine orchestration with RL/BC policy routing |
+| ESC | `esc.py` | Evidence Sufficiency Controller for anchor-based two-stage retrieval |
+| BC Retrieval Router | `retrieval_router_bc.py` | MLP classifier: routes between IRCoT and anchor-based fallback |
+| Offline RL Router | `offline_rl_router.py` | Reward-weighted imitation learning router (reward = semF1_adaptive − semF1_ircot) |
+| LangGraph Orchestrator | `langgraph_rag.py` | State-machine orchestration of all agents |
 
 ## Optimization Journey
 
@@ -103,13 +116,28 @@ We iteratively optimized the pipeline across **retrieval**, **chunking**, and **
 | + CoT Prompt | Reasoning/Answer format + answer parsing | 0.672 | 70.0% | 0.750 | 73.3% | 0.519 |
 | **+ Few-Shot Examples** | **2 in-context examples for multi-hop reasoning** | **0.705** | **73.3%** | **0.750** | **73.3%** | **0.592** |
 
+### GPT-4o-mini + Retrieval Router Stages (30-question eval set)
+
+| Stage | Key Change | semF1 | semF1 ≥0.8 |
+|-------|-----------|-------|------------|
+| GPT-4o-mini baseline | Switch from GPT-3.5 | 0.571 | 56.7% |
+| + force_answer | Remove "insufficient context" fallback | 0.640 | — |
+| + few-shot v2 | Redesigned examples for GPT-4o-mini behavior | 0.702 | 73.3% |
+| + Adaptive retrieval router | Hard rule: ctxP<0.2 → anchor-based fallback | 0.727 | — |
+| **+ BC retrieval router** | **MLP replaces hard rule; learns non-linear boundary** | **0.755** | **76.7%** |
+| + Offline RL router* | Reward-weighted IL on 500-question trajectories | 0.824* | — |
+
+*Offline RL result is simulation-based (held-out test set, not a full re-run).
+
 ### Cumulative Improvement
 
 ```
-semF1:       0.416  →  0.705   (+69.5%)
-semF1 >=0.8: 33.3%  →  73.3%  (+40.0pp)
-ctxR:        0.697  →  0.750   (+7.6%)
-ctxR >=0.8:  63.3%  →  73.3%  (+10.0pp)
+semF1:       0.416  →  0.755   (+81.5%)
+semF1 >=0.8: 33.3%  →  76.7%  (+43.4pp)
+
+500-question evaluation:
+  IRCoT baseline:    semF1 = 0.669
+  Adaptive BC router: semF1 = 0.710
 ```
 
 ### What Each Optimization Did
@@ -378,12 +406,14 @@ agent_rl/
 │   │   ├── hybrid_retriever.py     # BM25 + FAISS + RRF fusion
 │   │   ├── reranker.py             # CrossEncoder reranking
 │   │   ├── multi_query.py          # LLM query expansion + sub-query decomposition
-│   │   ├── esc.py                  # Evidence Sufficiency Controller (PAR2-RAG Stage 2)
+│   │   ├── esc.py                  # Evidence Sufficiency Controller (anchor-based Stage 2)
 │   │   ├── generation_agent.py     # CoT generation + answer extraction
 │   │   ├── evaluation_agent.py     # Ragas-based quality metrics
-│   │   ├── langgraph_rag.py        # LangGraph state-machine orchestrator + PAR2 nodes
-│   │   ├── RLRouterAgent.py        # RL/BC policy router (BC + PPO, 2-action)
-│   │   └── ppo_router_trainer.py  # PPO online training for router
+│   │   ├── langgraph_rag.py        # LangGraph state-machine orchestrator
+│   │   ├── retrieval_router_bc.py  # BC retrieval router (IRCoT vs anchor-based fallback)
+│   │   ├── offline_rl_router.py    # Offline RL router (reward-weighted imitation learning)
+│   │   ├── RLRouterAgent.py        # Legacy generation-level router (BC + PPO)
+│   │   └── ppo_router_trainer.py   # PPO training for generation-level router
 │   ├── data-hotpot/                # HotpotQA evaluation dataset
 │   ├── runs/                       # Experiment trajectories & stats
 │   ├── scripts/                    # Vectorstore build scripts
@@ -415,8 +445,12 @@ agent_rl/
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/query` | POST | Query the RAG pipeline |
+| `/query` | POST | Query the RAG pipeline (synchronous) |
+| `/query/stream` | POST | Stream response via Server-Sent Events |
+| `/health` | GET | Health check (agents loaded, Redis connected) |
+| `/metrics` | GET | Prometheus metrics |
+| `/cache/stats` | GET | Redis cache hit/miss statistics |
+| `/cache/clear` | DELETE | Clear all cached queries |
 
 ## Customizing the Vector Database
 
