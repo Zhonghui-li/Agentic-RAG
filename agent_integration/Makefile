@@ -3,6 +3,8 @@
 # ============================
 PYTHON = ../venv/bin/python
 DATASET = data-hotpot/dev_real.jsonl
+DATASET200 = data-hotpot/dev_200.jsonl
+DATASET500 = data-hotpot/dev_500.jsonl
 
 # 默认 top_k & attempts
 TOPK = 5
@@ -145,6 +147,51 @@ train_retrieval_router:
 		--top_k $(TOPK) \
 		--gen_max_attempts $(ATTEMPTS) \
 		--out_dir runs/trajectories_4omini_adaptive_bc \
+		--use_router 1 \
+		--use_adaptive_retrieval 1
+
+# ============================
+#  200-question experiments (train/test split for offline RL)
+# ============================
+4omini-ircot-200:
+	@echo "=== GPT-4o-mini IRCoT+force (200 questions) ==="
+	GEN_LLM_MODEL=gpt-4o-mini GEN_FORCE_ANSWER=1 EMB_MODEL=text-embedding-3-small \
+	$(PYTHON) -m agents.evaluate_dataset_real \
+		--dataset $(DATASET200) \
+		--top_k $(TOPK) \
+		--gen_max_attempts $(ATTEMPTS) \
+		--out_dir runs/trajectories_200_ircot \
+		--use_router 0
+
+4omini-adaptive-bc-200:
+	@echo "=== GPT-4o-mini Adaptive + BC Router (200 questions) ==="
+	GEN_LLM_MODEL=gpt-4o-mini GEN_FORCE_ANSWER=1 EMB_MODEL=text-embedding-3-small \
+	$(PYTHON) -m agents.evaluate_dataset_real \
+		--dataset $(DATASET200) \
+		--top_k $(TOPK) \
+		--gen_max_attempts $(ATTEMPTS) \
+		--out_dir runs/trajectories_200_adaptive_bc \
+		--use_router 1 \
+		--use_adaptive_retrieval 1
+
+4omini-ircot-500:
+	@echo "=== GPT-4o-mini IRCoT+force (500 questions) ==="
+	GEN_LLM_MODEL=gpt-4o-mini GEN_FORCE_ANSWER=1 EMB_MODEL=text-embedding-3-small \
+	$(PYTHON) -m agents.evaluate_dataset_real \
+		--dataset $(DATASET500) \
+		--top_k $(TOPK) \
+		--gen_max_attempts $(ATTEMPTS) \
+		--out_dir runs/trajectories_500_ircot \
+		--use_router 0
+
+4omini-adaptive-bc-500:
+	@echo "=== GPT-4o-mini Adaptive + BC Router (500 questions) ==="
+	GEN_LLM_MODEL=gpt-4o-mini GEN_FORCE_ANSWER=1 EMB_MODEL=text-embedding-3-small \
+	$(PYTHON) -m agents.evaluate_dataset_real \
+		--dataset $(DATASET500) \
+		--top_k $(TOPK) \
+		--gen_max_attempts $(ATTEMPTS) \
+		--out_dir runs/trajectories_500_adaptive_bc \
 		--use_router 1 \
 		--use_adaptive_retrieval 1
 
