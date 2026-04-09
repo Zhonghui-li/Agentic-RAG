@@ -1056,6 +1056,7 @@ def run_rag_pipeline(
             "context_recall": final_state.get("context_recall", 0.0),
             "context_precision": final_state.get("context_precision", 0.0),
             "metrics": final_state.get("metrics", {}),
+            "routing_decision": final_state.get("retrieval_quality", "n/a"),
         }
 
         # LangGraph 的 finalizer 里已经会 commit logger，这里不用再管

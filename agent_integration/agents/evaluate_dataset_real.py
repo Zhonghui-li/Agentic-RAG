@@ -273,6 +273,7 @@ def run_dataset_and_collect(
             "retrieval_time_ms": _num(res.get("metrics",{}).get("retrieval_time", 0.0)),
             "total_time_ms": _num(res.get("metrics",{}).get("total_time", 0.0)),
             "doc_count": _num(res.get("metrics", {}).get("doc_count", 0.0)),
+            "routing_decision": res.get("routing_decision", "n/a"),
         }
         rows_accum.append(row)
 
