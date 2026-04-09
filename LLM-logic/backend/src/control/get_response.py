@@ -48,7 +48,14 @@ def get_response_control():
             # Handle RAG Agent method - uses the agentic RAG pipeline
             try:
                 print(f"[DEBUG] [{request_id}] Using RAG Agent pipeline")
-                result = query_rag_service(input_text, use_router=True)
+                # Build conversation history (all turns except the current one)
+                raw_messages = data.get("messages", [])
+                history = [
+                    {"role": "assistant" if m["role"] == "bot" else m["role"], "content": m["content"]}
+                    for m in raw_messages[:-1]
+                    if m.get("role") in ("user", "bot", "assistant") and m.get("content")
+                ]
+                result = query_rag_service(input_text, use_router=True, history=history)
                 response_json = {"choices": [{"message": {"content": result}}]}
 
                 save_res = {
@@ -163,12 +170,20 @@ def get_response_stream_control():
         if method != "rag-agent":
             return jsonify({"error": "Streaming only supported for RAG Agent"}), 400
 
+        # Build conversation history
+        raw_messages = data.get("messages", [])
+        history = [
+            {"role": "assistant" if m["role"] == "bot" else m["role"], "content": m["content"]}
+            for m in raw_messages[:-1]
+            if m.get("role") in ("user", "bot", "assistant") and m.get("content")
+        ]
+
         # Store complete response for saving to conversation
         complete_response = []
 
         def generate():
             try:
-                for chunk in stream_rag_service(input_text, use_router=True):
+                for chunk in stream_rag_service(input_text, use_router=True, history=history):
                     # Parse the chunk to accumulate the answer
                     if chunk.startswith('data: '):
                         try:

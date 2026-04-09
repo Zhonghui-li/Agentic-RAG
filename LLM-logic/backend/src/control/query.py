@@ -116,13 +116,14 @@ def query_claude(prompt, system_prompt=None, model="claude-3-opus-20240229"):
     return response.content[0].text
 
 
-def query_rag_service(query_str: str, use_router: bool = True) -> str:
+def query_rag_service(query_str: str, use_router: bool = True, history: list = []) -> str:
     """
     Query the RAG Service for agentic RAG responses.
 
     Args:
         query_str: The question to ask
         use_router: Whether to use LangGraph router (default True)
+        history: Conversation history as list of {"role": "user"/"assistant", "content": "..."} dicts
 
     Returns:
         The answer from the RAG pipeline
@@ -137,7 +138,8 @@ def query_rag_service(query_str: str, use_router: bool = True) -> str:
             f"{RAG_SERVICE_URL}/query",
             json={
                 "question": query_str,
-                "use_router": use_router
+                "use_router": use_router,
+                "history": history
             },
             timeout=120  # RAG pipeline may take longer
         )
@@ -572,13 +574,14 @@ def get_available_providers():
     return DEFAULT_PROVIDERS
 
 
-def stream_rag_service(query_str: str, use_router: bool = True):
+def stream_rag_service(query_str: str, use_router: bool = True, history: list = []):
     """
     Stream responses from the RAG Service using Server-Sent Events.
 
     Args:
         query_str: The question to ask
         use_router: Whether to use LangGraph router (default True)
+        history: Conversation history as list of {"role": "user"/"assistant", "content": "..."} dicts
 
     Yields:
         SSE formatted strings
@@ -592,7 +595,8 @@ def stream_rag_service(query_str: str, use_router: bool = True):
             f"{RAG_SERVICE_URL}/query/stream",
             json={
                 "question": query_str,
-                "use_router": use_router
+                "use_router": use_router,
+                "history": history
             },
             stream=True,
             timeout=120

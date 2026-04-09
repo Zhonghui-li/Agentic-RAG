@@ -1,0 +1,26 @@
+# Experiment data — not needed in production image
+agent_integration/runs/
+agent_integration/data-hotpot/
+agent_integration/trajectories/
+agent_integration/scripts/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Development artifacts
+**/.pytest_cache/
+**/*.egg-info/
+**/dist/
+**/build/
+
+# Secrets
+.env
+**/.env.local
