@@ -28,7 +28,10 @@ _RUNS = os.path.join(_HERE, "..", "runs")
 
 IRCOT_TRAJ    = os.path.join(_RUNS, "trajectories_500_ircot",       "traj.jsonl")
 ADAPTIVE_TRAJ = os.path.join(_RUNS, "trajectories_500_adaptive_bc", "traj.jsonl")
-DEFAULT_POLICY_PATH = os.path.join(_HERE, "offline_rl_router_policy.pt")
+PAR2_TRAJ     = os.path.join(_RUNS, "trajectories_500_par2",        "traj.jsonl")
+DEFAULT_POLICY_PATH    = os.path.join(_HERE, "offline_rl_router_policy.pt")
+DEFAULT_POLICY_PATH_V2 = os.path.join(_HERE, "offline_rl_router_policy_v2.pt")
+DEFAULT_POLICY_PATH_V3 = os.path.join(_HERE, "offline_rl_router_policy_v3.pt")
 DOC_CAP = 10.0
 
 
@@ -251,20 +254,338 @@ def evaluate(model: RouterNet, data: List[Dict], device: str = "cpu"):
     model.train()
 
 
+# ─── PAR2 counterfactual dataset builder ──────────────────────────────────────
+def build_paired_par2(ircot_path: str, par2_path: str) -> List[Dict]:
+    """
+    Build training data using full PAR2 counterfactuals for all 500 questions.
+
+    We ran PAR2 on every question, so the "behavior" action is always 1 (PAR2).
+    reward = semF1_PAR2 - semF1_IRCoT:
+      - positive → PAR2 helped, reinforce routing to PAR2
+      - negative → PAR2 hurt, push away from PAR2 (equivalent to reinforcing IRCoT)
+      - ~zero    → no meaningful update
+
+    This eliminates the ~80% zero-reward sparsity from adaptive-BC where the router
+    stayed on IRCoT and we had no PAR2 counterfactual for those questions.
+    """
+    ircot = _load_traj(ircot_path)
+    par2  = _load_traj(par2_path)
+
+    paired, skipped = [], 0
+    for q, ir in ircot.items():
+        p2 = par2.get(q)
+        if p2 is None:
+            skipped += 1
+            continue
+
+        semf1_ircot = _safe_float(ir.get("semantic_f1"))
+        semf1_par2  = _safe_float(p2.get("semantic_f1"))
+        delta       = semf1_par2 - semf1_ircot
+
+        # Oracle action: pick whichever method was actually better.
+        # reward = margin (always ≥ 0).
+        # Ties (delta==0) default to IRCoT (action=0) with reward=0 → no gradient.
+        # This gives the model both action labels to learn from, avoiding the
+        # degenerate solution that arises when action=1 for all samples.
+        action = 1 if delta > 0 else 0
+        reward = abs(delta)
+
+        paired.append({
+            "question":       q,
+            "features":       [
+                _safe_float(ir.get("context_precision")),
+                _safe_float(ir.get("context_recall")),
+                _safe_float(ir.get("doc_count")),
+            ],
+            "action":         action,
+            "reward":         reward,
+            "semf1_ircot":    semf1_ircot,
+            "semf1_par2":     semf1_par2,
+            "semf1_adaptive": semf1_par2 if action == 1 else semf1_ircot,
+            "routing":        "poor" if action == 1 else "ok",
+        })
+
+    print(f"[build_paired_par2] matched={len(paired)}, skipped={skipped}")
+    return paired
+
+
+def build_paired_enriched(ircot_path: str, adaptive_path: str, par2_path: str) -> List[Dict]:
+    """
+    Enrich the original adaptive-BC training data with true PAR2 counterfactuals.
+
+    Stays true to the original reward-weighted imitation framework:
+      action a_i  = routing_decision from adaptive run (behavior policy)
+      reward r_i  = semF1_adaptive − semF1_ircot   (was 0 for action=0 cases)
+                  → now filled with semF1_par2 − semF1_ircot for action=0 cases
+
+    Fixes the zero-reward sparsity problem:
+      - action=0 (IRCoT chosen), reward was 0   → now reward = semF1_par2 - semF1_ircot
+        · reward>0: PAR2 would have been better → pushes P(IRCoT|s) down
+        · reward<0: IRCoT was correct           → pushes P(IRCoT|s) up
+      - action=1 (PAR2 chosen), reward unchanged (already had true PAR2 outcome)
+    """
+    ircot    = _load_traj(ircot_path)
+    adaptive = _load_traj(adaptive_path)
+    par2     = _load_traj(par2_path)
+
+    paired, skipped, enriched = [], 0, 0
+    for q, ir in ircot.items():
+        ad = adaptive.get(q)
+        if ad is None:
+            skipped += 1
+            continue
+
+        routing = ad.get("routing_decision", "n/a")
+        if routing == "n/a":
+            skipped += 1
+            continue
+
+        action      = 1 if routing == "poor" else 0
+        semf1_ircot = _safe_float(ir.get("semantic_f1"))
+        semf1_ad    = _safe_float(ad.get("semantic_f1"))
+        reward      = semf1_ad - semf1_ircot   # original reward
+
+        # For action=0 (adaptive chose IRCoT, reward was 0), fill in PAR2 counterfactual.
+        # Only fill POSITIVE rewards: "PAR2 would have been better → push away from IRCoT".
+        # Negative counterfactuals (IRCoT was correct) are kept at 0 to avoid the
+        # training instability that arises from action=0 + negative reward in
+        # reward-weighted imitation (loss → -∞ as P(0) → 0).
+        if action == 0 and reward == 0.0:
+            p2 = par2.get(q)
+            if p2 is not None:
+                semf1_par2 = _safe_float(p2.get("semantic_f1"))
+                cf_reward  = semf1_par2 - semf1_ircot
+                if cf_reward > 0:
+                    reward = cf_reward
+                    enriched += 1
+
+        # Do NOT clip action=1 negative rewards: these are legitimate "PAR2 hurt"
+        # signals that balance the positive PAR2 samples and prevent the policy
+        # from routing everything to PAR2.
+
+        paired.append({
+            "question":       q,
+            "features":       [
+                _safe_float(ir.get("context_precision")),
+                _safe_float(ir.get("context_recall")),
+                _safe_float(ir.get("doc_count")),
+            ],
+            "action":         action,
+            "reward":         reward,
+            "semf1_ircot":    semf1_ircot,
+            "semf1_adaptive": semf1_ad,
+            "routing":        routing,
+        })
+
+    print(f"[build_paired_enriched] matched={len(paired)}, skipped={skipped}, "
+          f"zero-reward filled={enriched}")
+    return paired
+
+
+def train_v2(
+    ircot_path:  str   = IRCOT_TRAJ,
+    par2_path:   str   = PAR2_TRAJ,
+    warmstart:   str   = DEFAULT_POLICY_PATH,   # init from adaptive-BC policy
+    epochs:      int   = 60,
+    batch_size:  int   = 32,
+    lr:          float = 1e-3,
+    train_frac:  float = 0.8,
+    seed:        int   = 42,
+    save_path:   str   = DEFAULT_POLICY_PATH_V2,
+    device:      str   = "cpu",
+):
+    """
+    Retrain Offline RL Router using full PAR2 counterfactuals (500 questions).
+
+    Warm-starts from the adaptive-BC offline RL policy to avoid cold-start drift,
+    then fine-tunes with reward = semF1_PAR2 - semF1_IRCoT (no reward sparsity).
+    """
+    random.seed(seed)
+
+    paired = build_paired_par2(ircot_path, par2_path)
+
+    random.shuffle(paired)
+    n_train = int(len(paired) * train_frac)
+    train_data = paired[:n_train]
+    test_data  = paired[n_train:]
+    print(f"[Split] train={len(train_data)}, test={len(test_data)}")
+
+    rewards = [s["reward"] for s in train_data]
+    par2_chosen  = sum(1 for s in train_data if s["action"] == 1)
+    ircot_chosen = sum(1 for s in train_data if s["action"] == 0)
+    nonzero = sum(1 for r in rewards if r > 0)
+    print(f"[Reward] mean={sum(rewards)/len(rewards):.4f}  "
+          f"min={min(rewards):.4f}  max={max(rewards):.4f}  nonzero={nonzero}/{len(rewards)}")
+    print(f"[Oracle actions] PAR2={par2_chosen} ({par2_chosen/len(train_data)*100:.1f}%)  "
+          f"IRCoT={ircot_chosen} ({ircot_chosen/len(train_data)*100:.1f}%)")
+
+    loader = DataLoader(OfflineRLDataset(train_data), batch_size=batch_size, shuffle=True)
+
+    model = RouterNet().to(device)
+
+    # Warm-start from adaptive-BC offline RL policy
+    if warmstart and os.path.exists(warmstart):
+        ckpt = torch.load(warmstart, map_location=device)
+        model.load_state_dict(ckpt["state_dict"])
+        print(f"[Warm-start] loaded from {warmstart}")
+    else:
+        print(f"[Warm-start] no checkpoint found at {warmstart}, starting from scratch")
+
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+
+    model.train()
+    for epoch in range(epochs):
+        total_loss, n = 0.0, 0
+        for feats, actions, rews in loader:
+            feats, actions, rews = feats.to(device), actions.to(device), rews.to(device)
+            logits = model(feats)
+            log_probs = torch.log_softmax(logits, dim=-1)
+            action_log_probs = log_probs.gather(1, actions.unsqueeze(1)).squeeze(1)
+            loss = -(rews * action_log_probs).mean()
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item() * feats.size(0)
+            n += feats.size(0)
+
+        if (epoch + 1) % 10 == 0 or epoch == 0:
+            print(f"Epoch {epoch+1:3d}/{epochs}  loss={total_loss/max(1,n):.4f}")
+
+    print("\n===== Test Set =====")
+    evaluate(model, test_data, device)
+
+    torch.save({"state_dict": model.state_dict(), "input_dim": 3, "hidden_dim": 16},
+               save_path)
+    print(f"\n✅ Offline RL v2 policy saved → {save_path}")
+    return model
+
+
+def train_v3(
+    ircot_path:    str   = IRCOT_TRAJ,
+    adaptive_path: str   = ADAPTIVE_TRAJ,
+    par2_path:     str   = PAR2_TRAJ,
+    warmstart:     str   = DEFAULT_POLICY_PATH,
+    epochs:        int   = 60,
+    batch_size:    int   = 32,
+    lr:            float = 1e-3,
+    train_frac:    float = 0.8,
+    seed:          int   = 42,
+    save_path:     str   = DEFAULT_POLICY_PATH_V3,
+    device:        str   = "cpu",
+):
+    """
+    Retrain Offline RL Router using enriched adaptive-BC data.
+
+    Stays true to the original framework (behavior actions from adaptive run),
+    but fills in true PAR2 counterfactual rewards for the zero-reward samples
+    (action=0, where adaptive chose IRCoT and reward was stuck at 0).
+
+    Warm-starts from the existing offline RL policy as a reasonable prior.
+    """
+    random.seed(seed)
+
+    paired = build_paired_enriched(ircot_path, adaptive_path, par2_path)
+
+    random.shuffle(paired)
+    n_train = int(len(paired) * train_frac)
+    train_data = paired[:n_train]
+    test_data  = paired[n_train:]
+    print(f"[Split] train={len(train_data)}, test={len(test_data)}")
+
+    rewards = [s["reward"] for s in train_data]
+    pos  = sum(1 for r in rewards if r > 0)
+    neg  = sum(1 for r in rewards if r < 0)
+    zero = sum(1 for r in rewards if r == 0)
+    par2 = sum(1 for s in train_data if s["action"] == 1)
+    print(f"[Reward] pos={pos} zero={zero} neg={neg}  "
+          f"mean={sum(rewards)/len(rewards):.4f}")
+    print(f"[Actions] PAR2={par2}/{len(train_data)} "
+          f"({par2/len(train_data)*100:.1f}%) IRCoT={len(train_data)-par2}")
+
+    loader = DataLoader(OfflineRLDataset(train_data), batch_size=batch_size, shuffle=True)
+
+    model = RouterNet().to(device)
+    if warmstart and os.path.exists(warmstart):
+        ckpt = torch.load(warmstart, map_location=device)
+        model.load_state_dict(ckpt["state_dict"])
+        print(f"[Warm-start] loaded from {warmstart}")
+    else:
+        print(f"[Warm-start] not found, starting from scratch")
+
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+
+    model.train()
+    for epoch in range(epochs):
+        total_loss, n = 0.0, 0
+        for feats, actions, rews in loader:
+            feats, actions, rews = feats.to(device), actions.to(device), rews.to(device)
+            logits = model(feats)
+            log_probs = torch.log_softmax(logits, dim=-1)
+            action_log_probs = log_probs.gather(1, actions.unsqueeze(1)).squeeze(1)
+            loss = -(rews * action_log_probs).mean()
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item() * feats.size(0)
+            n += feats.size(0)
+
+        if (epoch + 1) % 10 == 0 or epoch == 0:
+            print(f"Epoch {epoch+1:3d}/{epochs}  loss={total_loss/max(1,n):.4f}")
+
+    print("\n===== Test Set =====")
+    evaluate(model, test_data, device)
+
+    torch.save({"state_dict": model.state_dict(), "input_dim": 3, "hidden_dim": 16},
+               save_path)
+    print(f"\n✅ Offline RL v3 policy saved → {save_path}")
+    return model
+
+
 # ─── CLI ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--ircot_path",    default=IRCOT_TRAJ)
     ap.add_argument("--adaptive_path", default=ADAPTIVE_TRAJ)
+    ap.add_argument("--par2_path",     default=None,
+                    help="v2: oracle actions from PAR2 full run; "
+                         "v3 (with --enrich): fill zero-rewards in adaptive-BC data")
+    ap.add_argument("--enrich",        action="store_true",
+                    help="v3 mode: enrich adaptive-BC zero-reward samples with PAR2 counterfactuals")
     ap.add_argument("--epochs",        type=int,   default=60)
-    ap.add_argument("--save_path",     default=DEFAULT_POLICY_PATH)
+    ap.add_argument("--save_path",     default=None)
     ap.add_argument("--seed",          type=int,   default=42)
     args = ap.parse_args()
-    train(
-        ircot_path=args.ircot_path,
-        adaptive_path=args.adaptive_path,
-        epochs=args.epochs,
-        save_path=args.save_path,
-        seed=args.seed,
-    )
+
+    if args.par2_path and args.enrich:
+        save = args.save_path or DEFAULT_POLICY_PATH_V3
+        train_v3(
+            ircot_path=args.ircot_path,
+            adaptive_path=args.adaptive_path,
+            par2_path=args.par2_path,
+            epochs=args.epochs,
+            save_path=save,
+            seed=args.seed,
+        )
+    elif args.par2_path:
+        save = args.save_path or DEFAULT_POLICY_PATH_V2
+        train_v2(
+            ircot_path=args.ircot_path,
+            par2_path=args.par2_path,
+            epochs=args.epochs,
+            save_path=save,
+            seed=args.seed,
+        )
+    else:
+        save = args.save_path or DEFAULT_POLICY_PATH
+        train(
+            ircot_path=args.ircot_path,
+            adaptive_path=args.adaptive_path,
+            epochs=args.epochs,
+            save_path=save,
+            seed=args.seed,
+        )
