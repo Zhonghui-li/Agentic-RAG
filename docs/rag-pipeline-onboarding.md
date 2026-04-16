@@ -1,7 +1,8 @@
 # RAG Pipeline — Onboarding Guide
 
 > **Goal:** Get you running the RAG pipeline locally in under 30 minutes.
-> For the full API contract and infrastructure requirements, see [`rag-service-schema.md`](./rag-service-schema.md).
+> For running the full application (frontend + backend), see [`fullstack-local-dev.md`](./fullstack-local-dev.md).
+> For hosting and infrastructure, see [`rag-service-schema.md`](./rag-service-schema.md).
 
 ---
 
@@ -25,6 +26,12 @@ RL Router       — (optional) decides if IRCoT result is good enough, or trigge
 
 The whole flow is orchestrated by a **LangGraph state machine** (`agents/langgraph_rag.py`).
 
+### Knowledge Base Scope
+
+> **Important:** The current vector store is built exclusively from the **HotpotQA Wikipedia corpus** (~24,000 paragraph-level chunks). The pipeline works well for HotpotQA-style multi-hop questions but **will not reliably answer questions outside this corpus**. For example, questions about recent events, specialized domains, or topics not covered in HotpotQA Wikipedia articles will likely return poor or no answers.
+>
+> To use the pipeline on a different knowledge base, build a new FAISS index from your own documents (see Section 3).
+
 ---
 
 ## 1. Prerequisites
@@ -42,17 +49,16 @@ The whole flow is orchestrated by a **LangGraph state machine** (`agents/langgra
 git clone https://github.com/aiea-lab/LLM-logic.git
 cd LLM-logic
 git checkout agentic-rag
-cd agent_integration
 
-# Create virtual environment
+# Create virtual environment at the repo root
 python3.11 -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r agent_integration/requirements.txt
 ```
 
-Create a `.env` file in `agent_integration/`:
+Create a `.env` file in the **repo root** (`LLM-logic/`, same level as `agent_integration/`):
 
 ```bash
 OPENAI_API_KEY=sk-...
@@ -60,12 +66,15 @@ OPENAI_API_KEY=sk-...
 # Point to the FAISS index directory (see Vector Store section)
 FAISS_PATH_OPENAI=vectorstore-hotpot/hotpotqa_faiss
 
-# Optional overrides (defaults shown)
+# Generation model — use gpt-4o-mini for best results (matches training data for RL router)
+# gpt-3.5-turbo is the code default but produces lower quality answers
 GEN_LLM_MODEL=gpt-4o-mini
 EMB_MODEL=text-embedding-3-large
 RETR_TOP_K=5
 GEN_FORCE_ANSWER=1
 ```
+
+> **Note:** The pipeline loads `.env` from the repo root (two levels up from `agents/`). Do **not** place `.env` inside `agent_integration/`.
 
 ---
 
@@ -84,7 +93,7 @@ This is the knowledge base the pipeline retrieves from.
 | Size on disk | ~500 MB |
 | Location | `vectorstore-hotpot/hotpotqa_faiss/` |
 
-> **The FAISS index is not in the repo** (too large). Get it from the team shared drive or build it yourself (see below).
+> **The FAISS index is not in the repo** (too large for git). Build it yourself using the script below (~20–30 min, one-time setup).
 
 ### How retrieval works
 
@@ -101,8 +110,6 @@ Query
 
 ### Build the index from scratch
 
-If you have a different corpus or need to rebuild:
-
 ```bash
 cd agent_integration
 python scripts/build_vectorstore.py \
@@ -113,22 +120,23 @@ python scripts/build_vectorstore.py \
 
 This will take ~20–30 minutes and cost a few dollars in OpenAI embedding API calls.
 
-### Swap in a different vector store
+### Swap in a different knowledge base
 
-To use a different knowledge base:
+To use the pipeline on your own documents:
 1. Prepare your documents as a JSON list: `[{"title": "...", "text": "..."}]`
 2. Run `build_vectorstore.py` with your file
 3. Point `FAISS_PATH_OPENAI` to the new index directory
 
 ---
 
-## 4. Run a Sample Query
+## 4. Verify the Pipeline (terminal smoke test)
 
-The quickest way to test the pipeline end-to-end:
+This runs one question end-to-end in the terminal — useful to confirm the pipeline is set up correctly before starting the full stack.
 
 ```bash
-cd agent_integration
+# From the repo root (LLM-logic/)
 source venv/bin/activate
+cd agent_integration
 
 python - <<'EOF'
 import os
@@ -155,7 +163,7 @@ retrieval_agent = RetrievalAgent(
 )
 
 result = run_rag_pipeline(
-    question="What government position did the publisher of Jane's Fighting Ships hold?",
+    question="Who is the dance partner of Yulia Zagoruychenko?",
     retrieval_agent=retrieval_agent,
     reasoning_agent=reasoning_agent,
     generation_agent=gen_agent,
@@ -164,37 +172,36 @@ result = run_rag_pipeline(
     visualize=False,
 )
 print("Answer:", result["answer"])
-print("Semantic F1:", result.get("semantic_f1_score"))
 EOF
 ```
 
-Expected output (roughly):
+Expected output:
 ```
-Answer: Fred T. Jane served as a naval officer...
-Semantic F1: 0.82
+Answer: Riccardo Cocchi
 ```
 
----
+> **For the full application (frontend UI), skip this step and go directly to [`fullstack-local-dev.md`](./fullstack-local-dev.md).**
 
-## 5. Run the Evaluation Script (500 questions)
+### Sample questions to try
+
+The file `agent_integration/data-hotpot/dev_real.jsonl` contains 30 HotpotQA multi-hop questions you can use for testing. Pick any question from it:
 
 ```bash
-cd agent_integration
-python main-hotpot.py
+# Print 5 random questions with their answers
+python3 -c "
+import json, random
+with open('agent_integration/data-hotpot/dev_real.jsonl') as f:
+    questions = [json.loads(l) for l in f]
+for q in random.sample(questions, 5):
+    print('Q:', q['question'])
+    print('A:', q['answer'])
+    print()
+"
 ```
-
-Key env vars for the eval script:
-
-| Variable | Default | Effect |
-|----------|---------|--------|
-| `TESTSET_SIZE` | `5` | How many questions to run |
-| `USE_ROUTER` | `0` | Enable RL routing (set to `1`) |
-| `EVAL_MODE` | `hybrid` | Scoring mode: `strict` / `lenient` / `hybrid` |
-| `GEN_FORCE_ANSWER` | `1` | Force model to answer even with thin context |
 
 ---
 
-## 6. Key Files
+## 5. Key Files
 
 ```
 agent_integration/
@@ -204,39 +211,40 @@ agent_integration/
 │   ├── generation_agent.py     # CoT answer generation
 │   ├── evaluation_agent.py     # RAGAS scoring + Semantic F1
 │   ├── reasoning_agent.py      # DSPy sub-question decomposition
-│   ├── hybrid_retriever.py     # BM25 + FAISS + RRF
-│   ├── reranker.py             # CrossEncoder reranker
-│   ├── retrieval_router_bc.py  # BC retrieval router (IRCoT vs PAR2)
-│   └── offline_rl_router.py    # V2 Oracle RL router training
+│   ├── hybrid_retriever.py     # BM25 + FAISS + RRF fusion
+│   ├── reranker.py             # CrossEncoder reranker (ms-marco-MiniLM-L-6-v2)
+│   ├── esc.py                  # Evidence Sufficiency Controller (PAR2 stage 2)
+│   ├── multi_query.py          # Multi-query expansion
+│   ├── offline_rl_router.py    # V2 Oracle RL router (routing logic + inference)
+│   └── offline_rl_router_policy_v2.pt  # Required: trained router weights
 ├── scripts/
 │   └── build_vectorstore.py    # Build FAISS index from corpus
 ├── data-hotpot/
-│   ├── dev_500.jsonl           # 500-question evaluation set
 │   └── dev_real.jsonl          # 30-question development set
-├── vectorstore-hotpot/         # FAISS index (not in repo, get from team)
-├── main-hotpot.py              # Batch evaluation entry point
+├── vectorstore-hotpot/         # FAISS index (not in repo, build with script above)
 └── requirements.txt
 ```
 
 ---
 
-## 7. The RL Router (optional, advanced)
+## 6. The RL Router (background)
 
 The pipeline has two retrieval modes:
 
-| Mode | Description | When to use |
-|------|-------------|-------------|
-| **IRCoT** (default) | Iterative retrieval, up to 4 hops | Most questions (~70%) |
-| **PAR2** | Anchor-based two-stage retrieval, wider coverage | Hard questions where IRCoT fails |
+| Mode | Description |
+|------|-------------|
+| **IRCoT** (default) | Iterative retrieval, up to 4 hops — handles ~70% of questions |
+| **PAR2** | Anchor-based two-stage retrieval — wider coverage for harder questions |
 
-The **V2 Oracle RL Router** (`agents/offline_rl_router.py`) automatically decides which mode to use, based on IRCoT retrieval quality signals (context precision, recall, doc count). It's a small MLP trained on 500 paired experiments.
+The **V2 Oracle RL Router** (`agents/offline_rl_router.py`) automatically picks the mode per question based on retrieval quality signals. The pre-trained weights (`offline_rl_router_policy_v2.pt`) are required at startup — the router runs automatically when the full stack is running.
 
-To enable:
-```bash
-USE_ROUTER=1 python main-hotpot.py
-```
+---
 
-To use the V2 policy specifically, see `run_v2_live_eval.py`.
+## 7. Running the Full Stack (Frontend + Backend)
+
+To run the complete application — Next.js frontend, Flask backend, and RAG service together — see **[`fullstack-local-dev.md`](./fullstack-local-dev.md)**.
+
+For Docker-based deployment and cloud hosting, see **[`rag-service-schema.md`](./rag-service-schema.md)**.
 
 ---
 
@@ -246,7 +254,7 @@ To use the V2 policy specifically, see `run_v2_live_eval.py`.
 → Check that `FAISS_PATH_OPENAI` points to a directory containing `index.faiss` and `index.pkl`.
 
 **`OpenAI API key not set`**
-→ Make sure `.env` is in `agent_integration/` and contains `OPENAI_API_KEY=sk-...`.
+→ Make sure `.env` is in the **repo root** (`LLM-logic/`) and contains `OPENAI_API_KEY=sk-...`.
 
 **`ModuleNotFoundError: rank_bm25`**
 → Run `pip install rank-bm25 sentence-transformers` (these are at the bottom of `requirements.txt`).
@@ -254,15 +262,8 @@ To use the V2 policy specifically, see `run_v2_live_eval.py`.
 **Slow first run**
 → The CrossEncoder model (`ms-marco-MiniLM-L-6-v2`) downloads from HuggingFace on first use (~90MB). Subsequent runs use the cache.
 
----
-
-## 9. API Reference
-
-The pipeline also runs as a FastAPI service. See [`rag-service-schema.md`](./rag-service-schema.md) for:
-- Endpoint definitions (`POST /query`, `POST /query/stream`, `GET /health`)
-- All environment variables and their defaults
-- Infrastructure requirements (CPU, memory, Redis)
-- How to run with Docker
+**Pipeline answers questions outside HotpotQA poorly**
+→ Expected behavior. The vector store only covers the HotpotQA Wikipedia corpus. To support a different domain, build a new FAISS index from your own documents (see Section 3).
 
 ---
 
