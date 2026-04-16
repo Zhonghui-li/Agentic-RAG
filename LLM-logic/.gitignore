@@ -1,0 +1,6 @@
+# local env files
+.env
+poetry.lock
+/node_modules
+.DS_Store
+faiss_store/

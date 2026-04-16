@@ -1,0 +1,56 @@
+version: 2
+updates:
+  # Python dependencies for RAG Service
+  - package-ecosystem: "pip"
+    directory: "/rag_service"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(rag):"
+    labels:
+      - "dependencies"
+      - "python"
+
+  # Python dependencies for Backend
+  - package-ecosystem: "pip"
+    directory: "/LLM-logic/backend"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(backend):"
+    labels:
+      - "dependencies"
+      - "python"
+
+  # Node.js dependencies for Frontend
+  - package-ecosystem: "npm"
+    directory: "/LLM-logic/frontend"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(frontend):"
+    labels:
+      - "dependencies"
+      - "javascript"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(actions):"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/rag_service"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(docker):"
+    labels:
+      - "dependencies"
+      - "docker"

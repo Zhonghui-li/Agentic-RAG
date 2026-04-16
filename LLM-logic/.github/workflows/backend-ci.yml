@@ -1,0 +1,92 @@
+name: Backend CI
+
+on:
+  pull_request:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11.10"
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          poetry lock
+          poetry install --no-root
+
+      - name: Export requirements.txt
+        run: |
+          cd backend
+          poetry self update
+          poetry self add poetry-plugin-export
+          poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+      - name: Upload requirements.txt
+        uses: actions/upload-artifact@v4
+        with:
+          name: requirements.txt
+          path: backend/requirements.txt
+
+  Format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download requirements.txt
+        uses: actions/download-artifact@v4
+        with:
+          name: requirements.txt
+          path: backend
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11.10"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          poetry lock
+          poetry install --no-root
+
+      - name: Lint with isort
+        run: |
+          cd backend
+          poetry run isort . --check-only || poetry run isort .
+
+      - name: Lint with flake8
+        run: |
+          cd backend
+          poetry run flake8 . || true
+
+      - name: Lint with black
+        run: |
+          cd backend
+          poetry run black --check . || poetry run black .
