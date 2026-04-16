@@ -381,8 +381,6 @@ def create_rag_graph(
                 print(f"\n✍️ Generate answer... (regenerate #{regenerate_count}, feedback injected)")
             else:
                 print(f"\n✍️ Generate answer... (use original question)")
-            print(f"🧪 Reference in generator: {reference}")
-
             start = time.time()
             answer_result = generation_agent.answer(
                 question=question,

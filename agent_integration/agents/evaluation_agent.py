@@ -497,10 +497,6 @@ class EvaluationAgent:
             "reference": reference if (reference and str(reference).strip()) else None,
         }
 
-        print(f"\n🔍 DEBUG: Query length: {len(query)}")
-        print(f"🔍 DEBUG: Retrieved docs: {len(contexts)}")
-        print(f"🔍 DEBUG: Response length: {len(resp_text)}")
-
         dataset = EvaluationDataset.from_list([record])
 
         # 动态 metrics：无 reference 不评 Faithfulness

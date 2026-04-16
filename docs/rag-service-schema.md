@@ -110,7 +110,7 @@ image and must be mounted or pre-loaded onto the host.
 | File / Directory | Size | Purpose |
 |-----------------|------|---------|
 | `agent_integration/vectorstore-hotpot/hotpotqa_faiss/` | ~500 MB | FAISS vector index over ~10K Wikipedia passages (HotpotQA corpus) |
-| `agent_integration/agents/retrieval_router_bc.pt` | ~50 KB | Trained BC router MLP weights |
+| `agent_integration/agents/offline_rl_router_policy_v2.pt` | ~50 KB | Trained V2 Oracle RL retrieval router weights |
 
 > **Note on the knowledge base:** The current vectorstore is built from the HotpotQA
 > Wikipedia corpus. To use a different knowledge base, build a new FAISS index with
