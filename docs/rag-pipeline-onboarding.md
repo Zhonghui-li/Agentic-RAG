@@ -244,59 +244,11 @@ USE_ROUTER=1 python main-hotpot.py
 
 ---
 
-## 8. Running the Full Stack Locally
+## 8. Running the Full Stack (Frontend + Backend)
 
-This runs the complete application: Next.js frontend → Flask backend → RAG FastAPI service.
+To run the complete application — Next.js frontend, Flask backend, and RAG service together — see **[`fullstack-local-dev.md`](./fullstack-local-dev.md)**.
 
-### Prerequisites
-
-- Redis running locally (`brew install redis && brew services start redis`)
-- MongoDB running locally (`brew install mongodb-community && brew services start mongodb-community`)
-- Node.js + pnpm (`npm install -g pnpm`)
-
-### Start all three services
-
-Open three separate terminal tabs from the **repo root** (`LLM-logic/`):
-
-**Terminal 1 — RAG service (port 8001)**
-```bash
-source venv/bin/activate
-uvicorn rag_service.main:app --port 8001 --host 0.0.0.0
-```
-Startup takes ~20 seconds (BM25 index build + model load). Wait for `RAG Service initialized successfully!` before continuing.
-
-**Terminal 2 — Flask backend (port 5001)**
-```bash
-source venv/bin/activate
-cd LLM-logic/backend
-python app.py
-```
-
-**Terminal 3 — Frontend (port 3000)**
-```bash
-cd LLM-logic/frontend
-pnpm run dev
-```
-
-Then open `http://localhost:3000` in your browser. Select **RAG Agent** as the provider and type a question.
-
-> **Note:** The frontend calls the Flask backend at `http://127.0.0.1:5001`, which forwards to the RAG service at `http://localhost:8001`. All URLs are hardcoded for local development.
-
-### Verify via curl (no frontend needed)
-
-```bash
-# 1. Check RAG service health
-curl http://localhost:8001/health
-
-# 2. Query directly
-curl -X POST http://localhost:8001/query \
-  -H "Content-Type: application/json" \
-  -d '{"question": "Which country does the River Thames flow through?", "use_router": false}'
-```
-
-### Hosting
-
-For Docker-based deployment and cloud hosting, see [`rag-service-schema.md`](./rag-service-schema.md). It covers Docker Compose setup, all environment variables, infrastructure requirements, and open questions for the hosting team.
+For Docker-based deployment and cloud hosting, see **[`rag-service-schema.md`](./rag-service-schema.md)**.
 
 ---
 
