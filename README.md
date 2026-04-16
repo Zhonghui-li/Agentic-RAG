@@ -1,6 +1,6 @@
 # LLM Logic + Agentic RAG Integration
 
-A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Augmented Generation) pipeline, evaluated on [HotpotQA](https://hotpotqa.github.io/) multi-hop question answering. semF1 improved from **0.416 → 0.755 (+81.5%)** through systematic retrieval, generation, and routing optimization.
+A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Augmented Generation) pipeline, evaluated on [HotpotQA](https://hotpotqa.github.io/) multi-hop question answering. semF1 improved from **0.416 → 0.725 (+74%)** through systematic retrieval, generation, and routing optimization.
 
 ## Full-Stack Architecture
 
@@ -14,7 +14,7 @@ A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Aug
                            ▼
 ┌─────────────────────────────────────────────────────────┐
 │                   Main Backend                           │
-│               (Flask - Port 5000)                        │
+│               (Flask - Port 5001)                        │
 │  /get_response                                           │
 │    ├─ provider=openai  → OpenAI API                     │
 │    ├─ provider=claude  → Anthropic API                  │
@@ -28,10 +28,10 @@ A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Aug
 │               (FastAPI - Port 8001)                      │
 │  Agentic RAG Pipeline:                                   │
 │  - ReasoningAgent (Query Optimization)                   │
-│  - RetrievalAgent (FAISS Vector Search)                 │
-│  - GenerationAgent (Answer Generation)                   │
+│  - RetrievalAgent (FAISS + BM25 hybrid retrieval)       │
+│  - GenerationAgent (CoT Answer Generation)               │
 │  - EvaluationAgent (Quality Assessment)                  │
-│  - LangGraph Router (Multi-step Reasoning)              │
+│  - V2 Oracle RL Router (IRCoT vs PAR2 routing)          │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -69,7 +69,8 @@ A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Aug
                             │  ctxP, ctxR, doc_count
                             ▼
                    ┌───────────────────┐
-                   │  Retrieval Router │  BC MLP: IRCoT OK or anchor-based fallback?
+                   │  V2 Oracle RL     │  MLP trained on 500-question counterfactual
+                   │  Retrieval Router │  experiments: IRCoT OK or PAR2 fallback?
                    └────────┬──────────┘
                     ircot_ok │           │ par2_needed
                              ▼           ▼
@@ -95,68 +96,36 @@ A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Aug
 | GenerationAgent | `generation_agent.py` | CoT prompt + few-shot examples + answer parsing |
 | EvaluationAgent | `evaluation_agent.py` | Ragas-based faithfulness, relevancy, noise sensitivity |
 | ESC | `esc.py` | Evidence Sufficiency Controller for anchor-based two-stage retrieval |
-| Offline RL Router | `offline_rl_router.py` | Reward-weighted imitation learning router (reward = semF1_adaptive − semF1_ircot) |
+| Offline RL Router | `offline_rl_router.py` | V2 Oracle RL router trained on counterfactual experiments |
 | LangGraph Orchestrator | `langgraph_rag.py` | State-machine orchestration of all agents |
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.10+
-- Docker and Docker Compose (for full-stack deployment)
-- OpenAI API Key (required for embeddings + generation)
-- Anthropic API Key (optional, for Claude)
-- Google API Key (optional, for Gemini)
+- Python 3.11
+- OpenAI API key (required for embeddings + generation)
+- FAISS vector index (see [RAG Pipeline Onboarding](./docs/rag-pipeline-onboarding.md))
 
-### Run Evaluation
+### Run the Full Application Locally
 
-```bash
-cd agent_integration
+See **[`docs/fullstack-local-dev.md`](./docs/fullstack-local-dev.md)** for step-by-step instructions to start all three services (RAG service, Flask backend, Next.js frontend).
 
-# Build vectorstore (one-time)
-OPENAI_API_KEY_REAL=sk-... python scripts/build_vectorstore.py
+### RAG Pipeline Only (no frontend)
 
-# Run evaluation on HotpotQA dev set
-FAISS_PATH_OPENAI=vectorstore-hotpot/hotpotqa_faiss_v3 \
-python -m agents.evaluate_dataset_real \
-  --dataset data-hotpot/dev_real.jsonl \
-  --top_k 8 \
-  --out_dir runs/trajectories_latest \
-  --use_router 0
-```
+See **[`docs/rag-pipeline-onboarding.md`](./docs/rag-pipeline-onboarding.md)** for pipeline setup, vector store build, and terminal smoke test.
 
-### Run Full-Stack Application
+### Docker (all services)
 
 ```bash
-# Copy environment file and add your API keys
 cp .env.example .env
-
-# Build and start all services
-docker-compose up --build
+# Add your OPENAI_API_KEY to .env
+docker-compose up
 ```
 
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
-- **RAG Service**: http://localhost:8001
-
-### Local Development
-
-```bash
-# Backend (Flask)
-cd LLM-logic/backend
-pip install -r requirements.txt
-python app.py
-
-# Frontend (Next.js)
-cd LLM-logic/frontend
-pnpm install
-pnpm dev
-
-# RAG Service (FastAPI)
-cd rag_service
-pip install -r requirements.txt
-python main.py
-```
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5001
+- RAG Service: http://localhost:8001
 
 ## Available Models
 
@@ -165,60 +134,47 @@ python main.py
 - **Claude**: Claude 3 Opus, Sonnet, Haiku
 - **Gemini**: Gemini 1.5 Pro, Flash
 
-### Methods
-- **RAG Agent**: Multi-step agentic RAG pipeline with reasoning and evaluation
-- **Pro-SLM**: Prolog-based symbolic reasoning
-- **RAG**: Simple retrieval-augmented generation
-- **Chain of Thought**: Step-by-step reasoning
-- **Standard**: Direct LLM query
+### RAG Agent
+Multi-step agentic pipeline with hybrid retrieval, IRCoT reasoning, and V2 Oracle RL routing. **Works best on HotpotQA-style multi-hop questions** — the vector store is built from the HotpotQA Wikipedia corpus.
 
 ## Project Structure
 
 ```
-agent_rl/
+LLM-logic/
 ├── agent_integration/              # Core RAG pipeline
 │   ├── agents/
+│   │   ├── langgraph_rag.py        # LangGraph state-machine orchestrator
 │   │   ├── reasoning_agent.py      # Query optimization + IRCoT loop
-│   │   ├── retrieval_agent.py      # FAISS/BM25 retrieval + retry logic
+│   │   ├── retrieval_agent.py      # FAISS/BM25 retrieval
 │   │   ├── hybrid_retriever.py     # BM25 + FAISS + RRF fusion
 │   │   ├── reranker.py             # CrossEncoder reranking
-│   │   ├── multi_query.py          # LLM query expansion + sub-query decomposition
-│   │   ├── esc.py                  # Evidence Sufficiency Controller (anchor-based Stage 2)
+│   │   ├── multi_query.py          # LLM query expansion
+│   │   ├── esc.py                  # Evidence Sufficiency Controller (PAR2 Stage 2)
 │   │   ├── generation_agent.py     # CoT generation + answer extraction
 │   │   ├── evaluation_agent.py     # Ragas-based quality metrics
-│   │   ├── langgraph_rag.py        # LangGraph state-machine orchestrator
-│   │   ├── retrieval_router_bc.py  # BC retrieval router (IRCoT vs anchor-based fallback)
-│   │   ├── offline_rl_router.py    # Offline RL router (reward-weighted imitation learning)
-│   │   ├── RLRouterAgent.py        # Legacy generation-level router (BC + PPO)
-│   │   └── ppo_router_trainer.py   # PPO training for generation-level router
+│   │   ├── offline_rl_router.py    # V2 Oracle RL router
+│   │   └── offline_rl_router_policy_v2.pt  # Pre-trained router weights
 │   ├── data-hotpot/                # HotpotQA evaluation dataset
-│   ├── runs/                       # Experiment trajectories & stats
 │   ├── scripts/                    # Vectorstore build scripts
 │   ├── utils/                      # Text processing, trajectory logging
-│   └── vectorstore-hotpot/         # FAISS indices
+│   └── vectorstore-hotpot/         # FAISS indices (not in repo)
 │
-├── rag_service/                    # FastAPI RAG Service (production)
+├── rag_service/                    # FastAPI RAG Service
 ├── LLM-logic/
 │   ├── backend/                    # Flask Backend (multi-provider LLM)
 │   └── frontend/                   # Next.js Frontend
 │
+├── docs/
+│   ├── rag-pipeline-onboarding.md  # RAG pipeline setup guide
+│   ├── fullstack-local-dev.md      # Full-stack local development guide
+│   └── rag-service-schema.md       # API contract + hosting requirements
 ├── docker-compose.yml
 └── .env.example
 ```
 
 ## API Endpoints
 
-### Backend API
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/get_response` | POST | Send message and get LLM response |
-| `/new_conversation` | POST | Create new conversation |
-| `/conversation/<id>` | GET | Get conversation by ID |
-| `/user` | POST | Create new user |
-| `/login` | POST | User login |
-
-### RAG Service API
+### RAG Service (`localhost:8001`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -226,16 +182,17 @@ agent_rl/
 | `/query/stream` | POST | Stream response via Server-Sent Events |
 | `/health` | GET | Health check (agents loaded, Redis connected) |
 | `/metrics` | GET | Prometheus metrics |
-| `/cache/stats` | GET | Redis cache hit/miss statistics |
-| `/cache/clear` | DELETE | Clear all cached queries |
 
-## Customizing the Vector Database
+For full request/response schema and all environment variables, see [`docs/rag-service-schema.md`](./docs/rag-service-schema.md).
 
-The RAG Service uses FAISS for vector search. To use a different dataset:
+### Backend API (`localhost:5001`)
 
-1. Build your FAISS index using OpenAI embeddings
-2. Update `VECTORSTORE_PATH` in your environment
-3. Restart the RAG Service
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/get_response` | POST | Send message, get LLM response |
+| `/new_conversation` | POST | Create new conversation |
+| `/conversation/<id>` | GET | Get conversation by ID |
+| `/login` | POST | User login |
 
 ## License
 
