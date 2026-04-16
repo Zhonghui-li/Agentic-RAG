@@ -66,8 +66,9 @@ OPENAI_API_KEY=sk-...
 # Point to the FAISS index directory (see Vector Store section)
 FAISS_PATH_OPENAI=vectorstore-hotpot/hotpotqa_faiss
 
-# Optional overrides (defaults shown)
-GEN_LLM_MODEL=gpt-3.5-turbo
+# Generation model — use gpt-4o-mini for best results (matches training data for RL router)
+# gpt-3.5-turbo is the code default but produces lower quality answers
+GEN_LLM_MODEL=gpt-4o-mini
 EMB_MODEL=text-embedding-3-large
 RETR_TOP_K=5
 GEN_FORCE_ANSWER=1
@@ -180,6 +181,23 @@ Answer: Riccardo Cocchi
 ```
 
 > **For the full application (frontend UI), skip this step and go directly to [`fullstack-local-dev.md`](./fullstack-local-dev.md).**
+
+### Sample questions to try
+
+The file `agent_integration/data-hotpot/dev_real.jsonl` contains 30 HotpotQA multi-hop questions you can use for testing. Pick any question from it:
+
+```bash
+# Print 5 random questions with their answers
+python3 -c "
+import json, random
+with open('agent_integration/data-hotpot/dev_real.jsonl') as f:
+    questions = [json.loads(l) for l in f]
+for q in random.sample(questions, 5):
+    print('Q:', q['question'])
+    print('A:', q['answer'])
+    print()
+"
+```
 
 ---
 
