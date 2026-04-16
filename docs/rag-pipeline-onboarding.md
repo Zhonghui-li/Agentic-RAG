@@ -1,7 +1,8 @@
 # RAG Pipeline — Onboarding Guide
 
 > **Goal:** Get you running the RAG pipeline locally in under 30 minutes.
-> For the full API contract and infrastructure requirements, see [`rag-service-schema.md`](./rag-service-schema.md).
+> For running the full application (frontend + backend), see [`fullstack-local-dev.md`](./fullstack-local-dev.md).
+> For hosting and infrastructure, see [`rag-service-schema.md`](./rag-service-schema.md).
 
 ---
 
@@ -24,6 +25,12 @@ RL Router       — (optional) decides if IRCoT result is good enough, or trigge
 ```
 
 The whole flow is orchestrated by a **LangGraph state machine** (`agents/langgraph_rag.py`).
+
+### Knowledge Base Scope
+
+> **Important:** The current vector store is built exclusively from the **HotpotQA Wikipedia corpus** (~24,000 paragraph-level chunks). The pipeline works well for HotpotQA-style multi-hop questions but **will not reliably answer questions outside this corpus**. For example, questions about recent events, specialized domains, or topics not covered in HotpotQA Wikipedia articles will likely return poor or no answers.
+>
+> To use the pipeline on a different knowledge base, build a new FAISS index from your own documents (see Section 3).
 
 ---
 
@@ -102,8 +109,6 @@ Query
 
 ### Build the index from scratch
 
-If you have a different corpus or need to rebuild:
-
 ```bash
 cd agent_integration
 python scripts/build_vectorstore.py \
@@ -114,18 +119,18 @@ python scripts/build_vectorstore.py \
 
 This will take ~20–30 minutes and cost a few dollars in OpenAI embedding API calls.
 
-### Swap in a different vector store
+### Swap in a different knowledge base
 
-To use a different knowledge base:
+To use the pipeline on your own documents:
 1. Prepare your documents as a JSON list: `[{"title": "...", "text": "..."}]`
 2. Run `build_vectorstore.py` with your file
 3. Point `FAISS_PATH_OPENAI` to the new index directory
 
 ---
 
-## 4. Run a Sample Query
+## 4. Verify the Pipeline (terminal smoke test)
 
-The quickest way to test the pipeline end-to-end:
+This runs one question end-to-end in the terminal — useful to confirm the pipeline is set up correctly before starting the full stack.
 
 ```bash
 # From the repo root (LLM-logic/)
@@ -157,7 +162,7 @@ retrieval_agent = RetrievalAgent(
 )
 
 result = run_rag_pipeline(
-    question="What government position did the publisher of Jane's Fighting Ships hold?",
+    question="Who is the dance partner of Yulia Zagoruychenko?",
     retrieval_agent=retrieval_agent,
     reasoning_agent=reasoning_agent,
     generation_agent=gen_agent,
@@ -166,39 +171,19 @@ result = run_rag_pipeline(
     visualize=False,
 )
 print("Answer:", result["answer"])
-print("Semantic F1:", result.get("semantic_f1_score"))
 EOF
 ```
 
-Expected output (roughly):
+Expected output:
 ```
-Answer: Fred T. Jane served as a naval officer...
-Semantic F1: 0.82
+Answer: Riccardo Cocchi
 ```
+
+> **For the full application (frontend UI), skip this step and go directly to [`fullstack-local-dev.md`](./fullstack-local-dev.md).**
 
 ---
 
-## 5. Run the Evaluation Script (500 questions)
-
-```bash
-# From the repo root (LLM-logic/)
-source venv/bin/activate
-cd agent_integration
-python main-hotpot.py
-```
-
-Key env vars for the eval script:
-
-| Variable | Default | Effect |
-|----------|---------|--------|
-| `TESTSET_SIZE` | `5` | How many questions to run |
-| `USE_ROUTER` | `0` | Enable RL routing (set to `1`) |
-| `EVAL_MODE` | `hybrid` | Scoring mode: `strict` / `lenient` / `hybrid` |
-| `GEN_FORCE_ANSWER` | `1` | Force model to answer even with thin context |
-
----
-
-## 6. Key Files
+## 5. Key Files
 
 ```
 agent_integration/
@@ -212,39 +197,32 @@ agent_integration/
 │   ├── reranker.py             # CrossEncoder reranker (ms-marco-MiniLM-L-6-v2)
 │   ├── esc.py                  # Evidence Sufficiency Controller (PAR2 stage 2)
 │   ├── multi_query.py          # Multi-query expansion
-│   ├── offline_rl_router.py    # V2 Oracle RL router (train + inference)
-│   └── offline_rl_router_policy_v2.pt  # Pre-trained V2 router weights
+│   ├── offline_rl_router.py    # V2 Oracle RL router (routing logic + inference)
+│   └── offline_rl_router_policy_v2.pt  # Required: trained router weights
 ├── scripts/
 │   └── build_vectorstore.py    # Build FAISS index from corpus
 ├── data-hotpot/
-│   ├── dev_500.jsonl           # 500-question evaluation set
 │   └── dev_real.jsonl          # 30-question development set
 ├── vectorstore-hotpot/         # FAISS index (not in repo, build with script above)
-├── main-hotpot.py              # Batch evaluation entry point
 └── requirements.txt
 ```
 
 ---
 
-## 7. The RL Router (optional, advanced)
+## 6. The RL Router (background)
 
 The pipeline has two retrieval modes:
 
-| Mode | Description | When to use |
-|------|-------------|-------------|
-| **IRCoT** (default) | Iterative retrieval, up to 4 hops | Most questions (~70%) |
-| **PAR2** | Anchor-based two-stage retrieval, wider coverage | Hard questions where IRCoT fails |
+| Mode | Description |
+|------|-------------|
+| **IRCoT** (default) | Iterative retrieval, up to 4 hops — handles ~70% of questions |
+| **PAR2** | Anchor-based two-stage retrieval — wider coverage for harder questions |
 
-The **V2 Oracle RL Router** (`agents/offline_rl_router.py`) automatically decides which mode to use, based on IRCoT retrieval quality signals (context precision, recall, doc count). It's a small MLP trained on 500 paired experiments.
-
-To enable:
-```bash
-USE_ROUTER=1 python main-hotpot.py
-```
+The **V2 Oracle RL Router** (`agents/offline_rl_router.py`) automatically picks the mode per question based on retrieval quality signals. The pre-trained weights (`offline_rl_router_policy_v2.pt`) are required at startup — the router runs automatically when the full stack is running.
 
 ---
 
-## 8. Running the Full Stack (Frontend + Backend)
+## 7. Running the Full Stack (Frontend + Backend)
 
 To run the complete application — Next.js frontend, Flask backend, and RAG service together — see **[`fullstack-local-dev.md`](./fullstack-local-dev.md)**.
 
@@ -252,7 +230,7 @@ For Docker-based deployment and cloud hosting, see **[`rag-service-schema.md`](.
 
 ---
 
-## 9. Common Issues
+## 8. Common Issues
 
 **`FAISS index not found`**
 → Check that `FAISS_PATH_OPENAI` points to a directory containing `index.faiss` and `index.pkl`.
@@ -266,15 +244,8 @@ For Docker-based deployment and cloud hosting, see **[`rag-service-schema.md`](.
 **Slow first run**
 → The CrossEncoder model (`ms-marco-MiniLM-L-6-v2`) downloads from HuggingFace on first use (~90MB). Subsequent runs use the cache.
 
----
-
-## 10. API Reference
-
-The pipeline also runs as a FastAPI service. See [`rag-service-schema.md`](./rag-service-schema.md) for:
-- Endpoint definitions (`POST /query`, `POST /query/stream`, `GET /health`)
-- All environment variables and their defaults
-- Infrastructure requirements (CPU, memory, Redis)
-- How to run with Docker
+**Pipeline answers questions outside HotpotQA poorly**
+→ Expected behavior. The vector store only covers the HotpotQA Wikipedia corpus. To support a different domain, build a new FAISS index from your own documents (see Section 3).
 
 ---
 
