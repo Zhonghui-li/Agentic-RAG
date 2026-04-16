@@ -15,8 +15,7 @@ from a knowledge base and generates a grounded answer using chain-of-thought rea
 **Core components:**
 - **Hybrid retrieval** — BM25 + FAISS vector search + CrossEncoder reranker
 - **IRCoT** — Iterative retrieval loop for multi-hop questions (up to 4 hops)
-- **BC retrieval router** — Learned MLP that routes between IRCoT and anchor-based
-  two-stage retrieval depending on retrieval quality
+- **V2 Oracle RL retrieval router** — Learned MLP trained on 500-question counterfactual experiments; routes between IRCoT and anchor-based two-stage retrieval based on retrieval quality signals
 - **CoT generation** — Chain-of-thought prompting with few-shot examples
 - **RAGAS evaluation** — Faithfulness, relevancy, and semantic F1 scoring per query
 
@@ -110,7 +109,7 @@ image and must be mounted or pre-loaded onto the host.
 | File / Directory | Size | Purpose |
 |-----------------|------|---------|
 | `agent_integration/vectorstore-hotpot/hotpotqa_faiss/` | ~500 MB | FAISS vector index over ~10K Wikipedia passages (HotpotQA corpus) |
-| `agent_integration/agents/retrieval_router_bc.pt` | ~50 KB | Trained BC router MLP weights |
+| `agent_integration/agents/offline_rl_router_policy_v2.pt` | ~50 KB | Trained V2 Oracle RL router MLP weights |
 
 > **Note on the knowledge base:** The current vectorstore is built from the HotpotQA
 > Wikipedia corpus. To use a different knowledge base, build a new FAISS index with
