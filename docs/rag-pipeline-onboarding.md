@@ -42,17 +42,16 @@ The whole flow is orchestrated by a **LangGraph state machine** (`agents/langgra
 git clone https://github.com/aiea-lab/LLM-logic.git
 cd LLM-logic
 git checkout agentic-rag
-cd agent_integration
 
-# Create virtual environment
+# Create virtual environment at the repo root
 python3.11 -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r agent_integration/requirements.txt
 ```
 
-Create a `.env` file in `agent_integration/`:
+Create a `.env` file in the **repo root** (`LLM-logic/`, same level as `agent_integration/`):
 
 ```bash
 OPENAI_API_KEY=sk-...
@@ -61,11 +60,13 @@ OPENAI_API_KEY=sk-...
 FAISS_PATH_OPENAI=vectorstore-hotpot/hotpotqa_faiss
 
 # Optional overrides (defaults shown)
-GEN_LLM_MODEL=gpt-4o-mini
+GEN_LLM_MODEL=gpt-3.5-turbo
 EMB_MODEL=text-embedding-3-large
 RETR_TOP_K=5
 GEN_FORCE_ANSWER=1
 ```
+
+> **Note:** The pipeline loads `.env` from the repo root (two levels up from `agents/`). Do **not** place `.env` inside `agent_integration/`.
 
 ---
 
@@ -127,8 +128,9 @@ To use a different knowledge base:
 The quickest way to test the pipeline end-to-end:
 
 ```bash
-cd agent_integration
+# From the repo root (LLM-logic/)
 source venv/bin/activate
+cd agent_integration
 
 python - <<'EOF'
 import os
@@ -179,6 +181,8 @@ Semantic F1: 0.82
 ## 5. Run the Evaluation Script (500 questions)
 
 ```bash
+# From the repo root (LLM-logic/)
+source venv/bin/activate
 cd agent_integration
 python main-hotpot.py
 ```
@@ -237,8 +241,6 @@ To enable:
 ```bash
 USE_ROUTER=1 python main-hotpot.py
 ```
-
-To use the V2 policy specifically, see `run_v2_live_eval.py`.
 
 ---
 
