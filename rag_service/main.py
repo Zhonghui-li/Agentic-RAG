@@ -98,18 +98,23 @@ def get_cache_key(question: str, use_router: bool, history: List[Dict[str, str]]
     return f"rag:{hashlib.md5(content.encode()).hexdigest()}"
 
 
-def build_contextualized_question(question: str, history: List[Dict[str, str]]) -> str:
-    """Prepend recent conversation history to the question for multi-turn context."""
+def build_conversation_context(history: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    """Convert flat message history into [{q, a}] pairs for ReasoningAgent pronoun resolution."""
     if not history:
-        return question
-    # Include last 3 turns (6 messages) to avoid context explosion
-    recent = history[-6:]
-    history_lines = []
-    for msg in recent:
-        role = "User" if msg.get("role") == "user" else "Assistant"
-        history_lines.append(f"{role}: {msg.get('content', '').strip()}")
-    history_block = "\n".join(history_lines)
-    return f"[Conversation so far]\n{history_block}\n\n[Current question]\n{question}"
+        return []
+    context = []
+    msgs = history[-6:]  # last 3 turns (6 messages)
+    i = 0
+    while i < len(msgs) - 1:
+        if msgs[i].get("role") == "user" and msgs[i + 1].get("role") == "assistant":
+            context.append({
+                "q": msgs[i].get("content", "").strip(),
+                "a": msgs[i + 1].get("content", "").strip(),
+            })
+            i += 2
+        else:
+            i += 1
+    return context
 
 
 def get_cached_response(key: str) -> Optional[dict]:
@@ -373,21 +378,22 @@ async def query(request: QueryRequest):
         print(f"Cache MISS for: {request.question[:50]}...")
         CACHE_MISSES.inc()
 
-        # Build contextualized question from conversation history
-        pipeline_question = build_contextualized_question(request.question, request.history)
-        if request.history:
-            print(f"  - Using {len(request.history)} history messages for context")
+        # Build structured conversation context for pronoun resolution
+        conv_context = build_conversation_context(request.history)
+        if conv_context:
+            print(f"  - Using {len(conv_context)} prior turn(s) for memory context")
 
         # Run pipeline with timing
         pipeline_start = time.time()
         result = run_rag_pipeline(
-            question=pipeline_question,
+            question=request.question,
             retrieval_agent=_agents["retrieval"],
             reasoning_agent=_agents["reasoning"],
             generation_agent=_agents["generation"],
             evaluation_agent=_agents["evaluation"],
             use_router=request.use_router,
-            visualize=False
+            visualize=False,
+            conversation_context=conv_context,
         )
         PIPELINE_STAGE_LATENCY.labels(stage="full_pipeline").observe(time.time() - pipeline_start)
 
@@ -433,7 +439,7 @@ async def query_stream(request: QueryRequest):
         # Check cache first
         cache_key = get_cache_key(request.question, request.use_router, request.history)
         cached = get_cached_response(cache_key)
-        pipeline_question = build_contextualized_question(request.question, request.history)
+        conv_context = build_conversation_context(request.history)
 
         if cached:
             # Stream cached response word by word
@@ -462,13 +468,14 @@ async def query_stream(request: QueryRequest):
                 result = await loop.run_in_executor(
                     pool,
                     lambda: run_rag_pipeline(
-                        question=pipeline_question,
+                        question=request.question,
                         retrieval_agent=_agents["retrieval"],
                         reasoning_agent=_agents["reasoning"],
                         generation_agent=_agents["generation"],
                         evaluation_agent=_agents["evaluation"],
                         use_router=request.use_router,
-                        visualize=False
+                        visualize=False,
+                        conversation_context=conv_context,
                     )
                 )
 

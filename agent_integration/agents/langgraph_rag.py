@@ -54,6 +54,7 @@ def extract_scalar(val):
 # ---- State ----
 class AgentState(TypedDict):
     question: str
+    conversation_context: List[Dict[str, str]]  # [{q: ..., a: ...}] from prior turns
     refined_query: str
     docs: List[Document]
     answer: str
@@ -216,7 +217,8 @@ def create_rag_graph(
 
             reasoning_result = reasoning_agent.plan(
                 user_question=state["question"],
-                retrieved_docs=None
+                retrieved_docs=None,
+                conversation_context=state.get("conversation_context") or []
             )
             refined_query = reasoning_result.get("refined_query") or state["question"]
             duration = time.time() - start
@@ -1008,6 +1010,7 @@ def run_rag_pipeline(
         # 构造初始 AgentState
         init_state: AgentState = {
             "question": question,
+            "conversation_context": kwargs.get("conversation_context") or [],
             "refined_query": "",
             "docs": [],
             "answer": "",
@@ -1069,7 +1072,11 @@ def run_rag_pipeline(
     # 1) Reasoning → refined_query
     try:
         rstart = time.time()
-        plan_out = reasoning_agent.plan(user_question=question, retrieved_docs=None)
+        plan_out = reasoning_agent.plan(
+            user_question=question,
+            retrieved_docs=None,
+            conversation_context=kwargs.get("conversation_context") or []
+        )
         refined_query = plan_out.get("refined_query") or question
         fallback = bool(plan_out.get("fallback", False))
         metrics["query_optimization_time"] = round((time.time() - rstart) * 1000.0, 2)
