@@ -69,7 +69,7 @@ export const useChatHandler = () => {
       if (method === 'rag-agent') {
         const body = {
           model: 'rag-agent',
-          messages: [userMessage],
+          messages: [...messages, userMessage],  // full history for conversation memory
           conv_id: conversationId,
           method: 'rag-agent',
           provider: 'rag',
