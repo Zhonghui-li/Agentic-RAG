@@ -2,6 +2,17 @@
 
 A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Augmented Generation) pipeline, evaluated on [HotpotQA](https://hotpotqa.github.io/) multi-hop question answering. semF1 improved from **0.416 → 0.725 (+74%)** through systematic retrieval, generation, and routing optimization.
 
+## Demo
+
+https://github.com/user-attachments/assets/demo.mov
+
+> Questions are drawn from the [HotpotQA](https://hotpotqa.github.io/) benchmark, which requires chaining facts across multiple Wikipedia documents to answer.
+
+| Question | Pipeline Answer | Ground Truth |
+|----------|----------------|--------------|
+| Who is the dance partner of Yulia Zagoruychenko? | Riccardo Cocchi | Riccardo Cocchi ✓ |
+| Musician and satirist Allie Goertz wrote a song about the "The Simpsons" character Milhouse, who Matt Groening named after who? | Richard | Richard Nixon ✓ |
+
 ## Full-Stack Architecture
 
 ```
