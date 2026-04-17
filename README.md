@@ -4,7 +4,7 @@ A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Aug
 
 ## Demo
 
-https://github.com/user-attachments/assets/demo.mov
+https://github.com/user-attachments/assets/fcdaecc0-b071-4596-8d9f-4f34c0da6291
 
 > Questions are drawn from the [HotpotQA](https://hotpotqa.github.io/) benchmark, which requires chaining facts across multiple Wikipedia documents to answer.
 
