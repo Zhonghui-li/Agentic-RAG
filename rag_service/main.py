@@ -4,7 +4,7 @@ RAG Service - FastAPI wrapper for the RAG pipeline
 import os
 import sys
 import json
-import hashlib
+import numpy as np
 from contextlib import asynccontextmanager
 from typing import Optional, List, Dict
 from dotenv import load_dotenv
@@ -52,6 +52,10 @@ _agents = {}
 _redis_client: Optional[redis.Redis] = None
 CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))  # Default 1 hour
 
+# Semantic cache embedding client (initialized on startup)
+_cache_embeddings: Optional[OpenAIEmbeddings] = None
+SEMANTIC_CACHE_THRESHOLD = float(os.getenv("SEMANTIC_CACHE_THRESHOLD", "0.95"))
+
 # ============================================
 # Prometheus Metrics
 # ============================================
@@ -91,11 +95,48 @@ PIPELINE_STAGE_LATENCY = Histogram(
 )
 
 
-def get_cache_key(question: str, use_router: bool, history: List[Dict[str, str]] = []) -> str:
-    """Generate a cache key from the question and conversation history"""
-    history_str = json.dumps(history, ensure_ascii=False) if history else ""
-    content = f"{question.strip().lower()}:{use_router}:{history_str}"
-    return f"rag:{hashlib.md5(content.encode()).hexdigest()}"
+def _cosine_similarity(a: List[float], b: List[float]) -> float:
+    """Compute cosine similarity between two vectors"""
+    a, b = np.array(a), np.array(b)
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-10))
+
+
+def semantic_cache_lookup(question: str) -> Optional[str]:
+    """Find a semantically similar cached answer using embedding similarity"""
+    if _redis_client is None or _cache_embeddings is None:
+        return None
+    try:
+        query_emb = _cache_embeddings.embed_query(question)
+        keys = _redis_client.keys("rag:*")
+        best_score, best_answer = 0.0, None
+        for key in keys:
+            data = _redis_client.get(key)
+            if not data:
+                continue
+            entry = json.loads(data)
+            if "embedding" not in entry:
+                continue
+            score = _cosine_similarity(query_emb, entry["embedding"])
+            if score > best_score:
+                best_score, best_answer = score, entry.get("answer")
+        if best_score >= SEMANTIC_CACHE_THRESHOLD and best_answer:
+            return best_answer
+    except Exception as e:
+        print(f"Semantic cache lookup error: {e}")
+    return None
+
+
+def set_cached_response_semantic(question: str, answer: str) -> None:
+    """Cache answer with its query embedding for semantic lookup"""
+    if _redis_client is None or _cache_embeddings is None:
+        return
+    try:
+        query_emb = _cache_embeddings.embed_query(question)
+        cache_key = f"rag:{abs(hash(question.strip().lower()))}"
+        entry = {"embedding": query_emb, "answer": answer}
+        _redis_client.setex(cache_key, CACHE_TTL, json.dumps(entry))
+    except Exception as e:
+        print(f"Semantic cache set error: {e}")
 
 
 def build_conversation_context(history: List[Dict[str, str]]) -> List[Dict[str, str]]:
@@ -117,27 +158,6 @@ def build_conversation_context(history: List[Dict[str, str]]) -> List[Dict[str, 
     return context
 
 
-def get_cached_response(key: str) -> Optional[dict]:
-    """Get cached response from Redis"""
-    if _redis_client is None:
-        return None
-    try:
-        data = _redis_client.get(key)
-        if data:
-            return json.loads(data)
-    except Exception as e:
-        print(f"Redis get error: {e}")
-    return None
-
-
-def set_cached_response(key: str, response: dict) -> None:
-    """Cache response in Redis"""
-    if _redis_client is None:
-        return
-    try:
-        _redis_client.setex(key, CACHE_TTL, json.dumps(response))
-    except Exception as e:
-        print(f"Redis set error: {e}")
 
 
 class QueryRequest(BaseModel):
@@ -244,13 +264,19 @@ def init_agents():
 
 
 def init_redis():
-    """Initialize Redis connection"""
-    global _redis_client
+    """Initialize Redis connection and semantic cache embedding client"""
+    global _redis_client, _cache_embeddings
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     try:
         _redis_client = redis.from_url(redis_url, decode_responses=True)
         _redis_client.ping()
-        print(f"  - Redis connected: {redis_url}")
+        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+        _cache_embeddings = OpenAIEmbeddings(
+            model=os.getenv("EMB_MODEL", "text-embedding-ada-002"),
+            api_key=OPENAI_API_KEY,
+            base_url="https://api.openai.com/v1",
+        )
+        print(f"  - Redis connected: {redis_url} (semantic caching enabled)")
     except Exception as e:
         print(f"  - Redis connection failed: {e} (caching disabled)")
         _redis_client = None
@@ -360,17 +386,16 @@ async def query(request: QueryRequest):
         raise HTTPException(status_code=503, detail="Agents not initialized")
 
     try:
-        # Check cache first
-        cache_key = get_cache_key(request.question, request.use_router, request.history)
-        cached = get_cached_response(cache_key)
-        if cached:
+        # Check semantic cache first
+        cached_answer = semantic_cache_lookup(request.question)
+        if cached_answer:
             print(f"Cache HIT for: {request.question[:50]}...")
             CACHE_HITS.inc()
             REQUEST_COUNT.labels(endpoint="/query", status="success").inc()
             REQUEST_LATENCY.labels(endpoint="/query").observe(time.time() - start_time)
             ACTIVE_REQUESTS.dec()
             return QueryResponse(
-                answer=cached.get("answer", ""),
+                answer=cached_answer,
                 question=request.question,
                 success=True
             )
@@ -399,8 +424,8 @@ async def query(request: QueryRequest):
 
         answer = result.get("answer", "")
 
-        # Cache the result
-        set_cached_response(cache_key, {"answer": answer})
+        # Cache the result with semantic embedding
+        set_cached_response_semantic(request.question, answer)
 
         REQUEST_COUNT.labels(endpoint="/query", status="success").inc()
         REQUEST_LATENCY.labels(endpoint="/query").observe(time.time() - start_time)
@@ -436,21 +461,19 @@ async def query_stream(request: QueryRequest):
     async def generate_stream():
         import concurrent.futures
 
-        # Check cache first
-        cache_key = get_cache_key(request.question, request.use_router, request.history)
-        cached = get_cached_response(cache_key)
+        # Check semantic cache first
+        cached_answer = semantic_cache_lookup(request.question)
         conv_context = build_conversation_context(request.history)
 
-        if cached:
+        if cached_answer:
             # Stream cached response word by word
             yield f"data: {json.dumps({'type': 'status', 'content': 'Retrieved from cache...'})}\n\n"
             await asyncio.sleep(0.1)
 
-            answer = cached.get("answer", "")
-            words = answer.split()
+            words = cached_answer.split()
             for i, word in enumerate(words):
                 yield f"data: {json.dumps({'type': 'token', 'content': word + (' ' if i < len(words) - 1 else '')})}\n\n"
-                await asyncio.sleep(0.03)  # Small delay for visual effect
+                await asyncio.sleep(0.03)
 
             yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
             return
@@ -481,8 +504,8 @@ async def query_stream(request: QueryRequest):
 
                 answer = result.get("answer", "")
 
-                # Cache the result
-                set_cached_response(cache_key, {"answer": answer})
+                # Cache the result with semantic embedding
+                set_cached_response_semantic(request.question, answer)
 
                 yield f"data: {json.dumps({'type': 'status', 'content': 'Generating response...'})}\n\n"
                 await asyncio.sleep(0.1)

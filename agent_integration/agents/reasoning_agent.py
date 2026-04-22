@@ -38,7 +38,7 @@ class StrictRRSignature(dspy.Signature):
     先思考后作答：在内部逐步推理，但**只输出结构化字段**，用于稳定解析与评测。
     字段含义：
       - reasoning：用 1–2 句简要说明关键依据（不要展开长思维链）
-      - response ：最终产出文本（此处用于“检索查询”或改写结果）
+      - response ：最终产出文本（此处用于"检索查询"或改写结果）
     注意：不要输出与字段无关的多余文字。
     """
     context  = dspy.InputField(desc="检索到的上下文文本，可为空")
@@ -79,7 +79,7 @@ def load_dataset(json_path="data-hotpot/hotpot_mini_corpus.json",
 
 class ReasoningAgent:
     """
-    [MOD] 作用：面向 Retrieval 的“查询重写器”，不直接产最终答案。
+    [MOD] 作用：面向 Retrieval 的"查询重写器"，不直接产最终答案。
     输出：refined_query（用于 dense retrieval），以及 fallback 标记。
     """
 
@@ -202,36 +202,36 @@ class ReasoningAgent:
     # ===== 主入口：产出 refined_query =====
     def plan(self, user_question: str, retrieved_docs: Optional[List] = None,
              conversation_context: Optional[List] = None):
-        “””
-        统一模板：只产出”一行检索查询”，并返回 fallback 标记。
+        """
+        统一模板：只产出"一行检索查询"，并返回 fallback 标记。
         - 稳健处理 retrieved_docs（混合类型）；
         - DSPy 推理失败有兜底（从问题中抽关键词）；
         - 严格后处理成一行、≤20 词、去说明性前缀与噪声符号；
         - 记录检索命中（只写元数据，不落正文）。
         - conversation_context: [{q: ..., a: ...}] prior turns for pronoun resolution
-        “””
+        """
         import re
 
         # [NEW] 轨迹：起始打点
         if self.logger:
-            self.logger.add_reason(f”[reason.plan.start] q={user_question}”)
+            self.logger.add_reason(f"[reason.plan.start] q={user_question}")
 
         instruction = self._instruction_prefix()
         few_shot = self._fewshot_examples()
 
         # 1) 准备检索上下文（可为空，混合类型安全处理）
-        retrieved_context = “”
+        retrieved_context = ""
         fallback = False
         if retrieved_docs:
             parts = []
             for doc in retrieved_docs:
-                txt = getattr(doc, “page_content”, None)
+                txt = getattr(doc, "page_content", None)
                 if txt is None:
                     txt = str(doc)
-                txt = (txt or “”).strip()
+                txt = (txt or "").strip()
                 if txt:
                     parts.append(txt)
-            raw_ctx = “\n”.join(parts)
+            raw_ctx = "\n".join(parts)
             if self._should_fallback(raw_ctx):
                 fallback = True
             else:
@@ -240,26 +240,26 @@ class ReasoningAgent:
             fallback = True
 
         # 2) 统一上下文块（避免提示不一致）
-        ctx_block = f”{instruction}{few_shot}====\n”
-        ctx_block += “[RETRIEVED_SNIPPETS]\n” + (retrieved_context if retrieved_context else “<NONE>”) + “\n”
+        ctx_block = f"{instruction}{few_shot}====\n"
+        ctx_block += "[RETRIEVED_SNIPPETS]\n" + (retrieved_context if retrieved_context else "<NONE>") + "\n"
 
         # Inject conversation history for pronoun/coreference resolution
         if conversation_context:
             recent = conversation_context[-3:]  # last 3 turns max
-            ctx_lines = “\n”.join(f”Q: {t.get('q','')} / A: {t.get('a','')}” for t in recent)
-            ctx_block += f”\n[CONVERSATION HISTORY]\n{ctx_lines}\n”
+            ctx_lines = "\n".join(f"Q: {t.get('q','')} / A: {t.get('a','')}" for t in recent)
+            ctx_block += f"\n[CONVERSATION HISTORY]\n{ctx_lines}\n"
 
-        # 3) 强约束：明确只需要”一条检索查询”，并解析代词
+        # 3) 强约束：明确只需要"一条检索查询"，并解析代词
         if conversation_context:
             constrained_question = (
-                f”{user_question}\n\n”
-                “Resolve any pronouns or references using the conversation history above. “
-                “Return ONE rewritten search query only, concise keywords + entities + constraints; DO NOT explain.”
+                f"{user_question}\n\n"
+                "Resolve any pronouns or references using the conversation history above. "
+                "Return ONE rewritten search query only, concise keywords + entities + constraints; DO NOT explain."
             )
         else:
             constrained_question = (
-                f”{user_question}\n\n”
-                “Return ONE rewritten search query only, concise keywords + entities + constraints; DO NOT explain.”
+                f"{user_question}\n\n"
+                "Return ONE rewritten search query only, concise keywords + entities + constraints; DO NOT explain."
             )
 
         # 4) 记录输入（不落原文，避免泄漏）
@@ -312,7 +312,7 @@ class ReasoningAgent:
             tokens = h.split()[:20]
             raw_response = " ".join(tokens) or (user_question or "general query")
 
-        # 7) “一行检索查询”后处理
+        # 7) "一行检索查询"后处理
         first_line = raw_response.splitlines()[0].strip()
 
         # 去常见说明性前缀
@@ -342,7 +342,7 @@ class ReasoningAgent:
         if len(tokens) > 20:
             cleaned = " ".join(tokens[:20])
 
-        # 避免句号/感叹号/问号/分号/冒号收尾（更像“查询”）
+        # 避免句号/感叹号/问号/分号/冒号收尾（更像"查询"）
         cleaned = cleaned.rstrip(".!?;:")
 
         refined_query = cleaned if cleaned else first_line
