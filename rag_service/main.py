@@ -41,6 +41,8 @@ from agents.langgraph_rag import run_rag_pipeline
 
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_core.callbacks.base import BaseCallbackHandler
+from langchain_core.outputs import LLMResult
 from dspy.evaluate import SemanticF1
 import dspy
 
@@ -112,6 +114,23 @@ TOKENS_USED = Counter(
     'Total LLM tokens consumed',
     ['component']  # 'guardrail' | 'pipeline'
 )
+
+
+class _TokenTrackingCallback(BaseCallbackHandler):
+    """Callback that reports LLM token usage directly to Prometheus."""
+    def __init__(self, component: str):
+        super().__init__()
+        self.component = component
+
+    def on_llm_end(self, response: LLMResult, **kwargs):
+        for gen_list in response.generations:
+            for gen in gen_list:
+                usage = {}
+                if hasattr(gen, 'generation_info') and gen.generation_info:
+                    usage = gen.generation_info.get('token_usage', {})
+                total = usage.get('total_tokens', 0)
+                if total:
+                    TOKENS_USED.labels(component=self.component).inc(total)
 
 
 def _cosine_similarity(a: List[float], b: List[float]) -> float:
@@ -271,6 +290,7 @@ def init_agents():
         temperature=0.0,
         max_tokens=int(os.getenv("GEN_MAX_TOKENS", "512")),
         timeout=60.0,
+        callbacks=[_TokenTrackingCallback("pipeline")],
     )
 
     # Evaluation LLM
@@ -281,6 +301,7 @@ def init_agents():
         temperature=0.0,
         max_tokens=int(os.getenv("EVAL_MAX_TOKENS", "1024")),
         timeout=60.0,
+        callbacks=[_TokenTrackingCallback("pipeline")],
     )
 
     # Embeddings
