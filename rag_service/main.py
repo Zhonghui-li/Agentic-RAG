@@ -340,6 +340,7 @@ def init_agents():
         temperature=0.0,
         max_tokens=int(os.getenv("EVAL_MAX_TOKENS", "1024")),
         timeout=60.0,
+        max_retries=int(os.getenv("EVAL_MAX_RETRIES", "0")),
         callbacks=[_TokenTrackingCallback("pipeline")],
     )
 
