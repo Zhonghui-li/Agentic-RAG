@@ -59,7 +59,6 @@ export const useChatHandler = () => {
       setCurrConversation(data.id);
       setNewConvCount((prevCount) => prevCount + 1);
     }
-    console.log(`Method: ${method}, Provider: ${provider}`);
 
     try {
       const userMessage: Message = { role: 'user', content: textInput };
@@ -142,10 +141,8 @@ export const useChatHandler = () => {
                         });
                       } else if (eventData.type === 'done') {
                         // Attach sources to the final bot message
-                        console.log('done event received, sources:', eventData.sources, 'botMessageIndex:', botMessageIndex);
                         if (eventData.sources && eventData.sources.length > 0) {
                           setMessages((prevMessages) => {
-                            console.log('prevMessages.length:', prevMessages.length, 'botMessageIndex:', botMessageIndex);
                             const newMessages = [...prevMessages];
                             newMessages[botMessageIndex] = {
                               ...newMessages[botMessageIndex],
@@ -154,7 +151,6 @@ export const useChatHandler = () => {
                             return newMessages;
                           });
                         }
-                        console.log('Streaming complete');
                       } else if (eventData.type === 'error') {
                         setMessages((prevMessages) => {
                           const newMessages = [...prevMessages];

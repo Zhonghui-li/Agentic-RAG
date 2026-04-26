@@ -140,14 +140,14 @@ def _cosine_similarity(a: List[float], b: List[float]) -> float:
     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-10))
 
 
-def semantic_cache_lookup(question: str) -> Optional[str]:
-    """Find a semantically similar cached answer using embedding similarity"""
+def semantic_cache_lookup(question: str):
+    """Find a semantically similar cached answer. Returns (answer, sources) or (None, [])."""
     if _redis_client is None or _cache_embeddings is None:
-        return None
+        return None, []
     try:
         query_emb = _cache_embeddings.embed_query(question)
         keys = _redis_client.keys("rag:*")
-        best_score, best_answer = 0.0, None
+        best_score, best_entry = 0.0, None
         for key in keys:
             data = _redis_client.get(key)
             if not data:
@@ -157,22 +157,22 @@ def semantic_cache_lookup(question: str) -> Optional[str]:
                 continue
             score = _cosine_similarity(query_emb, entry["embedding"])
             if score > best_score:
-                best_score, best_answer = score, entry.get("answer")
-        if best_score >= SEMANTIC_CACHE_THRESHOLD and best_answer:
-            return best_answer
+                best_score, best_entry = score, entry
+        if best_score >= SEMANTIC_CACHE_THRESHOLD and best_entry:
+            return best_entry.get("answer"), best_entry.get("sources", [])
     except Exception as e:
         print(f"Semantic cache lookup error: {e}")
-    return None
+    return None, []
 
 
-def set_cached_response_semantic(question: str, answer: str) -> None:
-    """Cache answer with its query embedding for semantic lookup"""
+def set_cached_response_semantic(question: str, answer: str, sources: List[str] = []) -> None:
+    """Cache answer with its query embedding and sources for semantic lookup"""
     if _redis_client is None or _cache_embeddings is None:
         return
     try:
         query_emb = _cache_embeddings.embed_query(question)
         cache_key = f"rag:{abs(hash(question.strip().lower()))}"
-        entry = {"embedding": query_emb, "answer": answer}
+        entry = {"embedding": query_emb, "answer": answer, "sources": sources}
         _redis_client.setex(cache_key, CACHE_TTL, json.dumps(entry))
     except Exception as e:
         print(f"Semantic cache set error: {e}")
@@ -191,7 +191,10 @@ def check_scope(question: str) -> bool:
             f"You are a scope checker for a QA system whose knowledge base covers:\n"
             f"{CORPUS_DESCRIPTION}\n\n"
             f"Question: {question}\n\n"
-            f"Is this question answerable from this knowledge base? "
+            f"Reply 'no' ONLY if this question is clearly unrelated to the knowledge base "
+            f"(e.g. coding help, recipes, personal advice, math problems). "
+            f"If the question could plausibly involve a person, place, event, or fact "
+            f"that might appear in Wikipedia, reply 'yes'. When in doubt, reply 'yes'.\n"
             f"Reply with only 'yes' or 'no'."
         )
         response = _scope_llm.invoke(prompt)
@@ -501,7 +504,7 @@ async def query(request: QueryRequest):
 
     try:
         # Check semantic cache first
-        cached_answer = semantic_cache_lookup(request.question)
+        cached_answer, cached_sources = semantic_cache_lookup(request.question)
         if cached_answer:
             print(f"Cache HIT for: {request.question[:50]}...")
             CACHE_HITS.inc()
@@ -512,6 +515,7 @@ async def query(request: QueryRequest):
                 answer=cached_answer,
                 question=request.question,
                 success=True,
+                sources=cached_sources,
                 request_id=request_id
             )
 
@@ -570,8 +574,8 @@ async def query(request: QueryRequest):
         raw_confidence = result.get("faithfulness_score")
         confidence = float(raw_confidence) if raw_confidence is not None else None
 
-        # Cache the result with semantic embedding
-        set_cached_response_semantic(request.question, answer)
+        # Cache the result with semantic embedding and sources
+        set_cached_response_semantic(request.question, answer, sources)
 
         REQUEST_COUNT.labels(endpoint="/query", status="success").inc()
         REQUEST_LATENCY.labels(endpoint="/query").observe(time.time() - start_time)
@@ -614,7 +618,7 @@ async def query_stream(request: QueryRequest):
         import concurrent.futures
 
         # Check semantic cache first
-        cached_answer = semantic_cache_lookup(request.question)
+        cached_answer, cached_sources = semantic_cache_lookup(request.question)
         conv_context = build_conversation_context(request.history)
 
         if cached_answer:
@@ -627,7 +631,7 @@ async def query_stream(request: QueryRequest):
                 yield f"data: {json.dumps({'type': 'token', 'content': word + (' ' if i < len(words) - 1 else '')})}\n\n"
                 await asyncio.sleep(0.03)
 
-            yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'content': '', 'sources': cached_sources})}\n\n"
             return
 
         # Guardrails: reject out-of-scope questions before running the pipeline
@@ -682,8 +686,8 @@ async def query_stream(request: QueryRequest):
                 answer = result.get("answer", "")
                 sources = extract_sources(result.get("docs", []))
 
-                # Cache the result with semantic embedding
-                set_cached_response_semantic(request.question, answer)
+                # Cache the result with semantic embedding and sources
+                set_cached_response_semantic(request.question, answer, sources)
 
                 yield f"data: {json.dumps({'type': 'status', 'content': 'Generating response...'})}\n\n"
                 await asyncio.sleep(0.1)
