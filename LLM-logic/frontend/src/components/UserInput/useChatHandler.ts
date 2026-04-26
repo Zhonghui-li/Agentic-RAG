@@ -142,8 +142,10 @@ export const useChatHandler = () => {
                         });
                       } else if (eventData.type === 'done') {
                         // Attach sources to the final bot message
+                        console.log('done event received, sources:', eventData.sources, 'botMessageIndex:', botMessageIndex);
                         if (eventData.sources && eventData.sources.length > 0) {
                           setMessages((prevMessages) => {
+                            console.log('prevMessages.length:', prevMessages.length, 'botMessageIndex:', botMessageIndex);
                             const newMessages = [...prevMessages];
                             newMessages[botMessageIndex] = {
                               ...newMessages[botMessageIndex],

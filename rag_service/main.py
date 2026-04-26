@@ -226,7 +226,8 @@ def extract_sources(docs: list) -> List[str]:
                     if 0 < len(candidate) <= 80:
                         title = candidate
 
-        if title and title not in seen:
+        _invalid = {'not provided', 'n/a', 'none', 'unknown', ''}
+        if title and title.lower() not in _invalid and title not in seen:
             seen.add(title)
             titles.append(title)
     return titles

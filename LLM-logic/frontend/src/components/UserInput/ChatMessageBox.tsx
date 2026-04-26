@@ -18,7 +18,7 @@ const ChatMessageBox = ({ messages }: ChatMessageBoxProps) => {
           className={`p-2 rounded-md ${message.role === 'user' ? 'self-end' : 'self-start'}`}
           key={index}
         >
-          <MessageView content={message.content} role={message.role} />
+          <MessageView content={message.content} role={message.role} sources={message.sources} />
         </Box>
       ))}
       <div ref={messagesEndRef} />
