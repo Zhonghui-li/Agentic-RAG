@@ -4,6 +4,7 @@ RAG Service - FastAPI wrapper for the RAG pipeline
 import os
 import sys
 import json
+import functools
 import numpy as np
 from contextlib import asynccontextmanager
 from typing import Optional, List, Dict
@@ -39,6 +40,9 @@ from agents.retrieval_agent import RetrievalAgent
 from agents.evaluation_agent import EvaluationAgent
 from agents.generation_agent import GenerationAgent
 from agents.langgraph_rag import run_rag_pipeline
+from agents.reranker import create_cross_encoder_reranker
+from agents.hybrid_retriever import HybridRetriever
+from agents.multi_query import generate_query_variants
 
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
@@ -359,10 +363,19 @@ def init_agents():
 
     reasoning_agent = ReasoningAgent()
     evaluation_agent = EvaluationAgent(llm=eval_llm)
+    hybrid_retriever = HybridRetriever(vectorstore)
+    reranker = create_cross_encoder_reranker(
+        model_name=os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"),
+        top_n=int(os.getenv("RERANKER_TOP_N", "5")),
+    )
+    multi_query_fn = functools.partial(generate_query_variants, llm=gen_llm, n_variants=2)
     retrieval_agent = RetrievalAgent(
         vectorstore=vectorstore,
         evaluation_agent=evaluation_agent,
-        top_k=int(os.getenv("RETR_TOP_K", "5"))
+        top_k=int(os.getenv("RETR_TOP_K", "5")),
+        hybrid_retriever=hybrid_retriever,
+        reranker=reranker,
+        multi_query_fn=multi_query_fn,
     )
     generation_agent = GenerationAgent(
         llm=gen_llm,
