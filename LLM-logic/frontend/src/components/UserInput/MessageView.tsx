@@ -42,15 +42,34 @@ export function MessageView(props: Message) {
           justifyContent: 'space-between',
         }}
       >
-        <Typography
-          sx={{
-            color: isDark ? '#ffffff' : '#000000',
-            paddingRight: 1,
-          }}
-          variant="body1"
-        >
-          {props.content}
-        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, paddingRight: 1 }}>
+          <Typography
+            sx={{
+              color: isDark ? '#ffffff' : '#000000',
+            }}
+            variant="body1"
+          >
+            {props.content}
+          </Typography>
+          {props.sources && props.sources.length > 0 && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+              {props.sources.map((src) => (
+                <Box
+                  key={src}
+                  sx={{
+                    fontSize: '0.7rem',
+                    color: isDark ? '#a1a1b7' : '#5a6a7e',
+                    backgroundColor: isDark ? '#3a3a52' : '#e8edf2',
+                    borderRadius: '4px',
+                    padding: '2px 6px',
+                  }}
+                >
+                  📄 {src}
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
         <Divider
           flexItem
           orientation="vertical"

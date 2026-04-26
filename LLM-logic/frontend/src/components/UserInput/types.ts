@@ -17,6 +17,7 @@ export type Err = {
 export type Message = {
   role: 'text' | 'user' | 'bot';
   content: string;
+  sources?: string[];
 };
 
 export type ChatMessageBoxProps = {

@@ -115,6 +115,7 @@ export const useChatHandler = () => {
                       const eventData = JSON.parse(jsonStr) as {
                         type: string;
                         content: string;
+                        sources?: string[];
                       };
 
                       if (eventData.type === 'status') {
@@ -140,7 +141,17 @@ export const useChatHandler = () => {
                           return newMessages;
                         });
                       } else if (eventData.type === 'done') {
-                        // Streaming complete - final message is already set
+                        // Attach sources to the final bot message
+                        if (eventData.sources && eventData.sources.length > 0) {
+                          setMessages((prevMessages) => {
+                            const newMessages = [...prevMessages];
+                            newMessages[botMessageIndex] = {
+                              ...newMessages[botMessageIndex],
+                              sources: eventData.sources,
+                            };
+                            return newMessages;
+                          });
+                        }
                         console.log('Streaming complete');
                       } else if (eventData.type === 'error') {
                         setMessages((prevMessages) => {

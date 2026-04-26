@@ -679,6 +679,7 @@ async def query_stream(request: QueryRequest):
                         TOKENS_USED.labels(component="pipeline").inc(pipeline_tokens)
 
                 answer = result.get("answer", "")
+                sources = extract_sources(result.get("docs", []))
 
                 # Cache the result with semantic embedding
                 set_cached_response_semantic(request.question, answer)
@@ -692,7 +693,7 @@ async def query_stream(request: QueryRequest):
                     yield f"data: {json.dumps({'type': 'token', 'content': word + (' ' if i < len(words) - 1 else '')})}\n\n"
                     await asyncio.sleep(0.05)  # Typing effect
 
-                yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
+                yield f"data: {json.dumps({'type': 'done', 'content': '', 'sources': sources})}\n\n"
 
             except Exception as e:
                 print(f"Error in streaming RAG pipeline: {e}")
