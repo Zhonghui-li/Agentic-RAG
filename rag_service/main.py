@@ -107,6 +107,12 @@ OUT_OF_SCOPE_COUNT = Counter(
     'Total number of questions rejected by guardrails as out-of-scope'
 )
 
+TOKENS_USED = Counter(
+    'rag_tokens_used_total',
+    'Total LLM tokens consumed',
+    ['component']  # 'guardrail' | 'pipeline'
+)
+
 
 def _cosine_similarity(a: List[float], b: List[float]) -> float:
     """Compute cosine similarity between two vectors"""
@@ -169,6 +175,10 @@ def check_scope(question: str) -> bool:
             f"Reply with only 'yes' or 'no'."
         )
         response = _scope_llm.invoke(prompt)
+        if hasattr(response, 'usage_metadata') and response.usage_metadata:
+            TOKENS_USED.labels(component="guardrail").inc(
+                response.usage_metadata.get('total_tokens', 0)
+            )
         return response.content.strip().lower().startswith("yes")
     except Exception as e:
         print(f"Scope check error (defaulting to in-scope): {e}")
@@ -475,8 +485,10 @@ async def query(request: QueryRequest):
         if conv_context:
             print(f"  - Using {len(conv_context)} prior turn(s) for memory context")
 
-        # Run pipeline with timing
+        # Run pipeline with timing + token tracking via DSPy history
         pipeline_start = time.time()
+        lm = dspy.settings.lm
+        history_before = len(lm.history) if lm and hasattr(lm, 'history') else 0
         result = run_rag_pipeline(
             question=request.question,
             retrieval_agent=_agents["retrieval"],
@@ -488,6 +500,15 @@ async def query(request: QueryRequest):
             conversation_context=conv_context,
         )
         PIPELINE_STAGE_LATENCY.labels(stage="full_pipeline").observe(time.time() - pipeline_start)
+        if lm and hasattr(lm, 'history'):
+            new_calls = lm.history[history_before:]
+            pipeline_tokens = sum(
+                c.get('usage', {}).get('total_tokens', 0)
+                for c in new_calls
+                if isinstance(c, dict)
+            )
+            if pipeline_tokens:
+                TOKENS_USED.labels(component="pipeline").inc(pipeline_tokens)
 
         answer = result.get("answer", "")
 
@@ -568,6 +589,9 @@ async def query_stream(request: QueryRequest):
         loop = asyncio.get_event_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
             try:
+                lm = dspy.settings.lm
+                history_before = len(lm.history) if lm and hasattr(lm, 'history') else 0
+
                 result = await loop.run_in_executor(
                     pool,
                     lambda: run_rag_pipeline(
@@ -581,6 +605,15 @@ async def query_stream(request: QueryRequest):
                         conversation_context=conv_context,
                     )
                 )
+                if lm and hasattr(lm, 'history'):
+                    new_calls = lm.history[history_before:]
+                    pipeline_tokens = sum(
+                        c.get('usage', {}).get('total_tokens', 0)
+                        for c in new_calls
+                        if isinstance(c, dict)
+                    )
+                    if pipeline_tokens:
+                        TOKENS_USED.labels(component="pipeline").inc(pipeline_tokens)
 
                 answer = result.get("answer", "")
 
