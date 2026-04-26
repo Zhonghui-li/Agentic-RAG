@@ -20,6 +20,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import asyncio
 import time
+import uuid
 
 # Prometheus metrics
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
@@ -204,6 +205,33 @@ def check_scope(question: str) -> bool:
         return True
 
 
+def extract_sources(docs: list) -> List[str]:
+    """Extract unique document titles from retrieved docs.
+    Prefers metadata['title']; falls back to parsing 'Title: content' page_content format.
+    """
+    seen, titles = set(), []
+    for doc in docs:
+        meta = getattr(doc, 'metadata', None) or (doc.get('metadata', {}) if isinstance(doc, dict) else {})
+        title = (meta or {}).get('title', '').strip()
+
+        # Fallback: parse from "Title: content text" page_content format
+        # Only valid if colon appears before the first period (title-like prefix)
+        if not title:
+            content = getattr(doc, 'page_content', None) or (doc.get('page_content', '') if isinstance(doc, dict) else '')
+            if content and ':' in content:
+                colon_idx = content.index(':')
+                first_period = content.index('.') if '.' in content else len(content)
+                if colon_idx < first_period:
+                    candidate = content[:colon_idx].strip()
+                    if 0 < len(candidate) <= 80:
+                        title = candidate
+
+        if title and title not in seen:
+            seen.add(title)
+            titles.append(title)
+    return titles
+
+
 def build_conversation_context(history: List[Dict[str, str]]) -> List[Dict[str, str]]:
     """Convert flat message history into [{q, a}] pairs for ReasoningAgent pronoun resolution."""
     if not history:
@@ -235,6 +263,9 @@ class QueryResponse(BaseModel):
     answer: str
     question: str
     success: bool
+    sources: List[str] = []
+    confidence: Optional[float] = None
+    request_id: Optional[str] = None
     error: Optional[str] = None
 
 
@@ -459,6 +490,7 @@ async def query(request: QueryRequest):
     Query the RAG pipeline with a question
     """
     start_time = time.time()
+    request_id = str(uuid.uuid4())
     ACTIVE_REQUESTS.inc()
 
     if not _agents:
@@ -478,7 +510,8 @@ async def query(request: QueryRequest):
             return QueryResponse(
                 answer=cached_answer,
                 question=request.question,
-                success=True
+                success=True,
+                request_id=request_id
             )
 
         print(f"Cache MISS for: {request.question[:50]}...")
@@ -532,6 +565,9 @@ async def query(request: QueryRequest):
                 TOKENS_USED.labels(component="pipeline").inc(pipeline_tokens)
 
         answer = result.get("answer", "")
+        sources = extract_sources(result.get("docs", []))
+        raw_confidence = result.get("faithfulness_score")
+        confidence = float(raw_confidence) if raw_confidence is not None else None
 
         # Cache the result with semantic embedding
         set_cached_response_semantic(request.question, answer)
@@ -540,10 +576,15 @@ async def query(request: QueryRequest):
         REQUEST_LATENCY.labels(endpoint="/query").observe(time.time() - start_time)
         ACTIVE_REQUESTS.dec()
 
+        conf_str = f"{confidence:.2f}" if confidence is not None else "n/a"
+        print(f"[{request_id}] sources={sources} confidence={conf_str}")
         return QueryResponse(
             answer=answer,
             question=request.question,
-            success=True
+            success=True,
+            sources=sources,
+            confidence=confidence,
+            request_id=request_id
         )
 
     except Exception as e:
@@ -555,6 +596,7 @@ async def query(request: QueryRequest):
             answer="",
             question=request.question,
             success=False,
+            request_id=request_id,
             error=str(e)
         )
 
