@@ -56,6 +56,14 @@ CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))  # Default 1 hour
 _cache_embeddings: Optional[OpenAIEmbeddings] = None
 SEMANTIC_CACHE_THRESHOLD = float(os.getenv("SEMANTIC_CACHE_THRESHOLD", "0.95"))
 
+# Guardrails scope checker LLM (initialized on startup)
+_scope_llm: Optional[ChatOpenAI] = None
+GUARDRAILS_ENABLED = os.getenv("GUARDRAILS_ENABLED", "true").lower() == "true"
+CORPUS_DESCRIPTION = os.getenv(
+    "CORPUS_DESCRIPTION",
+    "Wikipedia-based factual knowledge, including encyclopedic topics such as people, places, events, science, history, and culture (HotpotQA benchmark)"
+)
+
 # ============================================
 # Prometheus Metrics
 # ============================================
@@ -92,6 +100,11 @@ PIPELINE_STAGE_LATENCY = Histogram(
     'Latency of each pipeline stage',
     ['stage'],
     buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0]
+)
+
+OUT_OF_SCOPE_COUNT = Counter(
+    'rag_out_of_scope_total',
+    'Total number of questions rejected by guardrails as out-of-scope'
 )
 
 
@@ -139,6 +152,29 @@ def set_cached_response_semantic(question: str, answer: str) -> None:
         print(f"Semantic cache set error: {e}")
 
 
+def check_scope(question: str) -> bool:
+    """
+    Returns True if the question is within corpus scope, False if out-of-scope.
+    Uses a cheap LLM call (gpt-3.5-turbo, max_tokens=5) to classify.
+    Defaults to True (in-scope) on any error to avoid false rejections.
+    """
+    if not GUARDRAILS_ENABLED or _scope_llm is None:
+        return True
+    try:
+        prompt = (
+            f"You are a scope checker for a QA system whose knowledge base covers:\n"
+            f"{CORPUS_DESCRIPTION}\n\n"
+            f"Question: {question}\n\n"
+            f"Is this question answerable from this knowledge base? "
+            f"Reply with only 'yes' or 'no'."
+        )
+        response = _scope_llm.invoke(prompt)
+        return response.content.strip().lower().startswith("yes")
+    except Exception as e:
+        print(f"Scope check error (defaulting to in-scope): {e}")
+        return True
+
+
 def build_conversation_context(history: List[Dict[str, str]]) -> List[Dict[str, str]]:
     """Convert flat message history into [{q, a}] pairs for ReasoningAgent pronoun resolution."""
     if not history:
@@ -175,7 +211,7 @@ class QueryResponse(BaseModel):
 
 def init_agents():
     """Initialize all agents and vectorstore"""
-    global _agents
+    global _agents, _scope_llm
 
     # Environment variables
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -202,6 +238,20 @@ def init_agents():
             timeout=30,
         )
     )
+
+    # Scope checker LLM (cheap: gpt-3.5-turbo, only needs yes/no)
+    if GUARDRAILS_ENABLED:
+        _scope_llm = ChatOpenAI(
+            model="gpt-3.5-turbo",
+            api_key=OPENAI_API_KEY,
+            base_url="https://api.openai.com/v1",
+            temperature=0.0,
+            max_tokens=5,
+            timeout=10.0,
+        )
+        print(f"  - Guardrails enabled (corpus: {CORPUS_DESCRIPTION[:60]}...)")
+    else:
+        print("  - Guardrails disabled")
 
     # Generation LLM
     gen_llm = ChatOpenAI(
@@ -403,6 +453,23 @@ async def query(request: QueryRequest):
         print(f"Cache MISS for: {request.question[:50]}...")
         CACHE_MISSES.inc()
 
+        # Guardrails: reject out-of-scope questions before running the pipeline
+        if not check_scope(request.question):
+            print(f"OUT-OF-SCOPE: {request.question[:80]}")
+            OUT_OF_SCOPE_COUNT.inc()
+            REQUEST_COUNT.labels(endpoint="/query", status="out_of_scope").inc()
+            REQUEST_LATENCY.labels(endpoint="/query").observe(time.time() - start_time)
+            ACTIVE_REQUESTS.dec()
+            return QueryResponse(
+                answer=(
+                    "This question appears to be outside the scope of my knowledge base. "
+                    "I'm designed to answer questions grounded in the documents I have access to. "
+                    "Please try asking about topics within that scope."
+                ),
+                question=request.question,
+                success=True
+            )
+
         # Build structured conversation context for pronoun resolution
         conv_context = build_conversation_context(request.history)
         if conv_context:
@@ -475,6 +542,19 @@ async def query_stream(request: QueryRequest):
                 yield f"data: {json.dumps({'type': 'token', 'content': word + (' ' if i < len(words) - 1 else '')})}\n\n"
                 await asyncio.sleep(0.03)
 
+            yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
+            return
+
+        # Guardrails: reject out-of-scope questions before running the pipeline
+        if not check_scope(request.question):
+            print(f"OUT-OF-SCOPE (stream): {request.question[:80]}")
+            OUT_OF_SCOPE_COUNT.inc()
+            out_of_scope_msg = (
+                "This question appears to be outside the scope of my knowledge base. "
+                "I'm designed to answer questions grounded in the documents I have access to. "
+                "Please try asking about topics within that scope."
+            )
+            yield f"data: {json.dumps({'type': 'token', 'content': out_of_scope_msg})}\n\n"
             yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
             return
 
