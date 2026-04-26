@@ -263,7 +263,7 @@ def build_conversation_context(history: List[Dict[str, str]]) -> List[Dict[str, 
 
 class QueryRequest(BaseModel):
     question: str
-    use_router: bool = True  # Whether to use LangGraph router
+    use_router: bool = False  # Whether to use LangGraph router
     history: List[Dict[str, str]] = []  # Conversation history: [{"role": "user"/"assistant", "content": "..."}]
 
 
