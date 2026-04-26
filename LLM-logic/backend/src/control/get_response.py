@@ -55,7 +55,7 @@ def get_response_control():
                     for m in raw_messages[:-1]
                     if m.get("role") in ("user", "bot", "assistant") and m.get("content")
                 ]
-                result = query_rag_service(input_text, use_router=True, history=history)
+                result = query_rag_service(input_text, use_router=False, history=history)
                 response_json = {"choices": [{"message": {"content": result}}]}
 
                 save_res = {
@@ -183,7 +183,7 @@ def get_response_stream_control():
 
         def generate():
             try:
-                for chunk in stream_rag_service(input_text, use_router=True, history=history):
+                for chunk in stream_rag_service(input_text, use_router=False, history=history):
                     # Parse the chunk to accumulate the answer
                     if chunk.startswith('data: '):
                         try:
