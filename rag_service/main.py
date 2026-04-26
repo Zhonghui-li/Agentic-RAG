@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import hashlib
+import functools
 from contextlib import asynccontextmanager
 from typing import Optional, List, Dict
 from dotenv import load_dotenv
@@ -38,6 +39,9 @@ from agents.retrieval_agent import RetrievalAgent
 from agents.evaluation_agent import EvaluationAgent
 from agents.generation_agent import GenerationAgent
 from agents.langgraph_rag import run_rag_pipeline
+from agents.hybrid_retriever import HybridRetriever
+from agents.reranker import create_cross_encoder_reranker
+from agents.multi_query import generate_query_variants
 
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
@@ -137,7 +141,7 @@ def set_cached_response(key: str, response: dict) -> None:
 
 class QueryRequest(BaseModel):
     question: str
-    use_router: bool = True  # Whether to use LangGraph router
+    use_router: bool = False  # Whether to use LangGraph router
     history: List[Dict[str, str]] = []  # Conversation history: [{"role": "user"/"assistant", "content": "..."}]
 
 
@@ -196,6 +200,7 @@ def init_agents():
         temperature=0.0,
         max_tokens=int(os.getenv("EVAL_MAX_TOKENS", "1024")),
         timeout=60.0,
+        max_retries=int(os.getenv("EVAL_MAX_RETRIES", "0")),
     )
 
     # Embeddings
@@ -218,10 +223,19 @@ def init_agents():
 
     reasoning_agent = ReasoningAgent()
     evaluation_agent = EvaluationAgent(llm=eval_llm)
+    hybrid_retriever = HybridRetriever(vectorstore)
+    reranker = create_cross_encoder_reranker(
+        model_name=os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"),
+        top_n=int(os.getenv("RERANKER_TOP_N", "5")),
+    )
+    multi_query_fn = functools.partial(generate_query_variants, llm=gen_llm, n_variants=2)
     retrieval_agent = RetrievalAgent(
         vectorstore=vectorstore,
         evaluation_agent=evaluation_agent,
-        top_k=int(os.getenv("RETR_TOP_K", "5"))
+        top_k=int(os.getenv("RETR_TOP_K", "8")),
+        hybrid_retriever=hybrid_retriever,
+        reranker=reranker,
+        multi_query_fn=multi_query_fn,
     )
     generation_agent = GenerationAgent(
         llm=gen_llm,
