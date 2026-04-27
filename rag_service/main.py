@@ -4,6 +4,7 @@ RAG Service - FastAPI wrapper for the RAG pipeline
 import os
 import sys
 import json
+import re
 import functools
 import numpy as np
 from contextlib import asynccontextmanager
@@ -144,8 +145,23 @@ def _cosine_similarity(a: List[float], b: List[float]) -> float:
     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-10))
 
 
+_CONTEXT_PRONOUNS = re.compile(
+    r'\b(he|she|they|it|his|her|their|its|him|them|this|that|these|those)\b',
+    re.IGNORECASE
+)
+
+def _is_context_dependent(question: str) -> bool:
+    """Return True if the question contains pronouns that require conversation context."""
+    return bool(_CONTEXT_PRONOUNS.search(question))
+
+
 def semantic_cache_lookup(question: str):
-    """Find a semantically similar cached answer. Returns (answer, sources) or (None, [])."""
+    """Find a semantically similar cached answer. Returns (answer, sources) or (None, []).
+    Skips cache for context-dependent questions (containing pronouns) to avoid
+    returning answers resolved from a different conversation context.
+    """
+    if _is_context_dependent(question):
+        return None, []
     if _redis_client is None or _cache_embeddings is None:
         return None, []
     try:
@@ -170,7 +186,12 @@ def semantic_cache_lookup(question: str):
 
 
 def set_cached_response_semantic(question: str, answer: str, sources: List[str] = []) -> None:
-    """Cache answer with its query embedding and sources for semantic lookup"""
+    """Cache answer with its query embedding and sources for semantic lookup.
+    Skips caching for context-dependent questions to avoid polluting the cache
+    with answers that are only valid in a specific conversation context.
+    """
+    if _is_context_dependent(question):
+        return
     if _redis_client is None or _cache_embeddings is None:
         return
     try:
