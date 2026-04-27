@@ -88,7 +88,7 @@ A full-stack chat application with an integrated agentic RAG (Retrieval-Augmente
 
 | Component | File | Description |
 |-----------|------|-------------|
-| ReasoningAgent | `reasoning_agent.py` | Sub-question decomposition, multi-query expansion, IRCoT iterative reasoning |
+| ReasoningAgent | `reasoning_agent.py` | Query optimization, pronoun resolution via conversation context, multi-query expansion |
 | RetrievalAgent | `retrieval_agent.py` | FAISS dense retrieval + BM25 sparse retrieval, RRF fusion |
 | HybridRetriever | `hybrid_retriever.py` | BM25 + FAISS reciprocal rank fusion |
 | CrossEncoder Reranker | `reranker.py` | `cross-encoder/ms-marco-MiniLM-L-6-v2` reranking |
@@ -98,6 +98,8 @@ A full-stack chat application with an integrated agentic RAG (Retrieval-Augmente
 | ESC | `esc.py` | Evidence Sufficiency Controller for anchor-based two-stage retrieval |
 | Offline RL Router | `offline_rl_router.py` | V2 Oracle RL router trained on counterfactual experiments |
 | LangGraph Orchestrator | `langgraph_rag.py` | State-machine orchestration of all agents |
+| Semantic Cache | `rag_service/main.py` | Redis embedding-based cache; bypassed for pronoun/context-dependent queries |
+| Guardrails | `rag_service/main.py` | Out-of-scope question filtering before pipeline execution |
 
 ## Quick Start
 
@@ -154,7 +156,16 @@ python main.py
 - **Gemini**: Gemini 1.5 Pro, Flash
 
 ### RAG Agent
-Multi-step agentic pipeline with hybrid retrieval, IRCoT reasoning, and V2 Oracle RL routing. **Works best on HotpotQA-style multi-hop questions** — the vector store is built from the HotpotQA Wikipedia corpus.
+Multi-step agentic pipeline with:
+- **Hybrid retrieval**: BM25 + FAISS + RRF fusion, CrossEncoder reranking
+- **IRCoT reasoning**: iterative retrieval up to 4 hops
+- **V2 Oracle RL routing**: MLP router switching between IRCoT and PAR2 fallback
+- **Short-term memory**: conversation context passed across turns for pronoun resolution
+- **Semantic cache**: Redis embedding-based cache for repeated queries
+- **Guardrails**: out-of-scope filtering before pipeline runs
+- **Streaming**: SSE token-by-token response with source citations
+
+**Works best on HotpotQA-style multi-hop questions** — the vector store is built from the HotpotQA Wikipedia corpus.
 
 ## Project Structure
 
