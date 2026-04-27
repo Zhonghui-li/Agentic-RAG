@@ -215,10 +215,11 @@ def create_rag_graph(
             if logger:
                 logger.add_reason(f"[query_optimizer.start] q={state['question']}")
 
+            conv_ctx = state.get("conversation_context") or []
             reasoning_result = reasoning_agent.plan(
                 user_question=state["question"],
                 retrieved_docs=None,
-                conversation_context=state.get("conversation_context") or []
+                conversation_context=conv_ctx
             )
             refined_query = reasoning_result.get("refined_query") or state["question"]
             duration = time.time() - start
@@ -236,7 +237,9 @@ def create_rag_graph(
                 }]
             }
         except Exception as e:
+            import traceback
             print(f"⚠️ Query optimization error: {e}")
+            print(traceback.format_exc())
             if logger:
                 logger.add_reason(f"[query_optimizer.error] {e}")
             return {
@@ -1090,7 +1093,7 @@ def run_rag_pipeline(
 
     # 2) Retrieval
     try:
-        q_for_ret = question if fallback else refined_query
+        q_for_ret = refined_query if refined_query else question  # always use refined (pronoun-resolved) query
         ret = retrieval_agent.retrieve(q_for_ret, reference=reference) or {}
         docs = ret.get("docs", [])
         metrics["retrieval_time"]    = round(ret.get("latency_ms", 0.0), 2)
