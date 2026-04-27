@@ -1,6 +1,6 @@
-# LLM Logic + Agentic RAG Integration
+# Agentic RAG
 
-A multi-model LLM chat application with an integrated agentic RAG (Retrieval-Augmented Generation) pipeline, evaluated on [HotpotQA](https://hotpotqa.github.io/) multi-hop question answering. semF1 improved from **0.416 → 0.725 (+74%)** through systematic retrieval, generation, and routing optimization.
+A full-stack chat application with an integrated agentic RAG (Retrieval-Augmented Generation) pipeline, evaluated on [HotpotQA](https://hotpotqa.github.io/) multi-hop question answering. semF1 improved from **0.416 → 0.755 (+81.5%)** through systematic retrieval, generation, and routing optimization.
 
 ## Full-Stack Architecture
 
@@ -159,7 +159,7 @@ Multi-step agentic pipeline with hybrid retrieval, IRCoT reasoning, and V2 Oracl
 ## Project Structure
 
 ```
-LLM-logic/
+agent_rl/
 ├── agent_integration/              # Core RAG pipeline
 │   ├── agents/
 │   │   ├── langgraph_rag.py        # LangGraph state-machine orchestrator
