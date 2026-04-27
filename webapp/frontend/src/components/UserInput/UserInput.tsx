@@ -16,7 +16,7 @@ function UserInput() {
   const { textInput, setTextInput, messages, handleClick, messagesEndRef } = useChatHandler();
   const [selectedOption1, setSelectedOption1] = useState('openai');
   const { isDark } = useContext(AppContext);
-  const [selectedOption2, setSelectedOption2] = useState('pro-slm');
+  const [selectedOption2, setSelectedOption2] = useState('rag-agent');
   const authContext = useContext(AuthContext);
 
   const handleKeyDown = useCallback(
@@ -139,9 +139,6 @@ function UserInput() {
               value={selectedOption2}
             >
               <MenuItem value="rag-agent">RAG Agent</MenuItem>
-              <MenuItem value="pro-slm">Pro-SLM</MenuItem>
-              <MenuItem value="rag">RAG</MenuItem>
-              <MenuItem value="chain-of-thought">Chain of Thought</MenuItem>
               <MenuItem value="standard">Standard</MenuItem>
             </Select>
 

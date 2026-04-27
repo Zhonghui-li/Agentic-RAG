@@ -7,7 +7,7 @@ import anthropic
 import google.api_core.exceptions as GoogleAPIError
 
 from src import app
-from src.control.query import query, proslm_query, query_rag_service, stream_rag_service
+from src.control.query import query, query_rag_service, stream_rag_service
 from src.model.conversation_model import append_message_by_id
 
 
@@ -72,11 +72,6 @@ def get_response_control():
             except Exception as e:
                 print(f"[ERROR] [{request_id}] RAG Agent error: {str(e)}")
                 return jsonify({"error": f"RAG Agent Error: {str(e)}"}), 500
-        elif method == "pro-slm":
-            result = "The 'Pro-SLM' method is not available. Please use 'std' (standard LLM) or select RAG Agent."
-            response_json = {"choices": [{"message": {"content": result}}]}
-            return jsonify(response_json)
-
         print(f"[DEBUG] [{request_id}] Processed method: {processed_method}")
 
         try:
