@@ -13,7 +13,7 @@ updates:
 
   # Python dependencies for Backend
   - package-ecosystem: "pip"
-    directory: "/LLM-logic/backend"
+    directory: "/webapp/backend"
     schedule:
       interval: "weekly"
     commit-message:
@@ -24,7 +24,7 @@ updates:
 
   # Node.js dependencies for Frontend
   - package-ecosystem: "npm"
-    directory: "/LLM-logic/frontend"
+    directory: "/webapp/frontend"
     schedule:
       interval: "weekly"
     commit-message:

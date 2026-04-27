@@ -1,4 +1,4 @@
-# LLM-logic
+# webapp
 
 <!-- ![Build Status](https://img.shields.io/github/actions/workflow/status/shoot649854/llm-logic-react/ci.yml?branch=main)
 ![License](https://img.shields.io/github/license/shoot649854/llm-logic-react)

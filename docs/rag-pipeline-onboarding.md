@@ -47,7 +47,7 @@ The whole flow is orchestrated by a **LangGraph state machine** (`agents/langgra
 ```bash
 # Clone and enter the project
 git clone https://github.com/aiea-lab/LLM-logic.git
-cd LLM-logic
+cd webapp
 git checkout agentic-rag
 
 # Create virtual environment at the repo root
@@ -58,7 +58,7 @@ source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r agent_integration/requirements.txt
 ```
 
-Create a `.env` file in the **repo root** (`LLM-logic/`, same level as `agent_integration/`):
+Create a `.env` file in the **repo root** (`webapp/`, same level as `agent_integration/`):
 
 ```bash
 OPENAI_API_KEY=sk-...
@@ -134,7 +134,7 @@ To use the pipeline on your own documents:
 This runs one question end-to-end in the terminal — useful to confirm the pipeline is set up correctly before starting the full stack.
 
 ```bash
-# From the repo root (LLM-logic/)
+# From the repo root (webapp/)
 source venv/bin/activate
 cd agent_integration
 
@@ -254,7 +254,7 @@ For Docker-based deployment and cloud hosting, see **[`rag-service-schema.md`](.
 → Check that `FAISS_PATH_OPENAI` points to a directory containing `index.faiss` and `index.pkl`.
 
 **`OpenAI API key not set`**
-→ Make sure `.env` is in the **repo root** (`LLM-logic/`) and contains `OPENAI_API_KEY=sk-...`.
+→ Make sure `.env` is in the **repo root** (`webapp/`) and contains `OPENAI_API_KEY=sk-...`.
 
 **`ModuleNotFoundError: rank_bm25`**
 → Run `pip install rank-bm25 sentence-transformers` (these are at the bottom of `requirements.txt`).

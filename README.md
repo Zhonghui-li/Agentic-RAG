@@ -123,9 +123,28 @@ cp .env.example .env
 docker-compose up
 ```
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5001
-- RAG Service: http://localhost:8001
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:5000
+- **RAG Service**: http://localhost:8001
+
+### Local Development
+
+```bash
+# Backend (Flask)
+cd webapp/backend
+pip install -r requirements.txt
+python app.py
+
+# Frontend (Next.js)
+cd webapp/frontend
+pnpm install
+pnpm dev
+
+# RAG Service (FastAPI)
+cd rag_service
+pip install -r requirements.txt
+python main.py
+```
 
 ## Available Models
 
@@ -159,8 +178,8 @@ LLM-logic/
 │   ├── utils/                      # Text processing, trajectory logging
 │   └── vectorstore-hotpot/         # FAISS indices (not in repo)
 │
-├── rag_service/                    # FastAPI RAG Service
-├── LLM-logic/
+├── rag_service/                    # FastAPI RAG Service (production)
+├── webapp/
 │   ├── backend/                    # Flask Backend (multi-provider LLM)
 │   └── frontend/                   # Next.js Frontend
 │

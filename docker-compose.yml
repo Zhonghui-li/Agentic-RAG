@@ -60,7 +60,7 @@ services:
   # Backend (Flask API)
   backend:
     build:
-      context: ./LLM-logic/backend
+      context: ./webapp/backend
       dockerfile: Dockerfile
     container_name: llm-logic-backend
     ports:
@@ -83,7 +83,7 @@ services:
   # Frontend (Next.js)
   frontend:
     build:
-      context: ./LLM-logic/frontend
+      context: ./webapp/frontend
       dockerfile: Dockerfile
     container_name: llm-logic-frontend
     ports:

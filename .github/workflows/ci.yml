@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./LLM-logic/backend
+        working-directory: ./webapp/backend
 
     steps:
       - name: Checkout code
@@ -70,7 +70,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: './LLM-logic/backend/requirements.txt'
+          cache-dependency-path: './webapp/backend/requirements.txt'
 
       - name: Install dependencies
         run: |
@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./LLM-logic/frontend
+        working-directory: ./webapp/frontend
 
     steps:
       - name: Checkout code
@@ -110,7 +110,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-          cache-dependency-path: './LLM-logic/frontend/pnpm-lock.yaml'
+          cache-dependency-path: './webapp/frontend/pnpm-lock.yaml'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -154,8 +154,8 @@ jobs:
       - name: Build Backend image
         uses: docker/build-push-action@v5
         with:
-          context: ./LLM-logic/backend
-          file: ./LLM-logic/backend/Dockerfile
+          context: ./webapp/backend
+          file: ./webapp/backend/Dockerfile
           push: false
           tags: backend:test
           cache-from: type=gha
@@ -164,8 +164,8 @@ jobs:
       - name: Build Frontend image
         uses: docker/build-push-action@v5
         with:
-          context: ./LLM-logic/frontend
-          file: ./LLM-logic/frontend/Dockerfile
+          context: ./webapp/frontend
+          file: ./webapp/frontend/Dockerfile
           push: false
           tags: frontend:test
           cache-from: type=gha

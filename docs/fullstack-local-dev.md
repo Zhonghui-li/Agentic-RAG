@@ -55,7 +55,7 @@ Follow **Section 2** of [`rag-pipeline-onboarding.md`](./rag-pipeline-onboarding
 
 Then install frontend dependencies:
 ```bash
-cd LLM-logic/frontend
+cd webapp/frontend
 pnpm install
 ```
 
@@ -63,7 +63,7 @@ pnpm install
 
 ## Start All Three Services
 
-Open three terminal tabs from the **repo root** (`LLM-logic/`).
+Open three terminal tabs from the **repo root** (`webapp/`).
 
 ### Terminal 1 — RAG Service (port 8001)
 
@@ -79,14 +79,14 @@ This takes ~20 seconds (BM25 index build over 24K docs + CrossEncoder model load
 
 ```bash
 source venv/bin/activate
-cd LLM-logic/backend
+cd webapp/backend
 python app.py
 ```
 
 ### Terminal 3 — Frontend (port 3000)
 
 ```bash
-cd LLM-logic/frontend
+cd webapp/frontend
 pnpm run dev
 ```
 
