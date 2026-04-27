@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # CORS: restrict to known frontend origins in production.
 # Set ALLOWED_ORIGINS env var to a comma-separated list of domains once hosting URL is confirmed.
-# Example: ALLOWED_ORIGINS=https://aiea-lab.com,http://localhost:3000
+# Example: ALLOWED_ORIGINS=https://your-domain.com,http://localhost:3000
 _raw_origins = os.getenv("ALLOWED_ORIGINS", "*")
 _allowed_origins = [o.strip() for o in _raw_origins.split(",")] if _raw_origins != "*" else "*"
 CORS(app, resources={r"/*": {"origins": _allowed_origins}})

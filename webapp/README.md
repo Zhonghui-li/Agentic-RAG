@@ -44,8 +44,6 @@ Here is a [link to the Notion](https://www.notion.so/team/21c564c6-a5b2-47d3-ac1
    git clone <repository-url>
    ```
 
-2. **Install SWIProlog**
-<https://www.swi-prolog.org/>
 
 ## Front End
 

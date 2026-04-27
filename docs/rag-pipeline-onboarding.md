@@ -46,7 +46,7 @@ The whole flow is orchestrated by a **LangGraph state machine** (`agents/langgra
 
 ```bash
 # Clone and enter the project
-git clone https://github.com/aiea-lab/LLM-logic.git
+git clone https://github.com/your-username/your-repo.git
 cd webapp
 git checkout agentic-rag
 

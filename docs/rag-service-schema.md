@@ -96,7 +96,7 @@ cache hit/miss counters, and active request gauge.
 | `GEN_FORCE_ANSWER` | `1` | Force the model to answer even with thin context |
 | `REDIS_URL` | `redis://localhost:6379/0` | Redis connection URL for response caching |
 | `CACHE_TTL` | `3600` | Cache time-to-live in seconds |
-| `ALLOWED_ORIGINS` | `*` | Comma-separated list of allowed CORS origins. Set to your hosted frontend domain in production (e.g. `https://aiea-lab.com`) |
+| `ALLOWED_ORIGINS` | `*` | Comma-separated list of allowed CORS origins. Set to your hosted frontend domain in production (e.g. `https://your-domain.com`) |
 | `VECTORSTORE_PATH` | `agent_integration/vectorstore-hotpot/hotpotqa_faiss` | Path to the FAISS index directory |
 | `RAG_SERVICE_PORT` | `8001` | Port the service listens on |
 
