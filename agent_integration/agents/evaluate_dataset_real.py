@@ -53,6 +53,33 @@ def load_jsonl(path: str) -> List[Dict[str, Any]]:
                 items.append(json.loads(line))
     return items
 
+# ===== Official HotpotQA Evaluation Metrics =====
+# Adapted from the official HotpotQA evaluation script (Yang et al. 2018)
+import re, string
+
+def _normalize_answer(s: str) -> str:
+    s = s.lower()
+    s = re.sub(r'\b(a|an|the)\b', ' ', s)
+    s = ''.join(ch for ch in s if ch not in string.punctuation)
+    s = ' '.join(s.split())
+    return s
+
+def _token_f1(prediction: str, ground_truth: str) -> float:
+    pred_tokens = _normalize_answer(prediction).split()
+    gt_tokens   = _normalize_answer(ground_truth).split()
+    if not pred_tokens or not gt_tokens:
+        return float(pred_tokens == gt_tokens)
+    common = set(pred_tokens) & set(gt_tokens)
+    if not common:
+        return 0.0
+    precision = len(common) / len(pred_tokens)
+    recall    = len(common) / len(gt_tokens)
+    return 2 * precision * recall / (precision + recall)
+
+def _exact_match(prediction: str, ground_truth: str) -> float:
+    return float(_normalize_answer(prediction) == _normalize_answer(ground_truth))
+# =================================================
+
 def _num(x, default=0.0) -> float:
     try:
         return float(x if not isinstance(x, list) else x[0])
@@ -91,6 +118,8 @@ def compute_and_write_stats(rows: List[Dict[str, Any]], out_dir: str):
         ("semantic_f1", "semf1"),
         ("context_precision", "ctxP"),
         ("context_recall", "ctxR"),
+        ("em", "EM"),
+        ("official_f1", "offF1"),
     ]
     stats_rows = []
     total_n = len(rows)
@@ -208,8 +237,9 @@ def run_dataset_and_collect(
     csv_fields = [
         "qid","question","reference","answer",
         "faithfulness","response_relevancy","noise_sensitivity","semantic_f1",
-        "context_precision","context_recall","doc_count",
-        "generation_time_ms","retrieval_time_ms","total_time_ms"
+        "context_precision","context_recall",
+        "em","official_f1",
+        "doc_count","generation_time_ms","retrieval_time_ms","total_time_ms"
     ]
     # 如果不存在则写表头
     if not os.path.exists(csv_path):
@@ -258,17 +288,21 @@ def run_dataset_and_collect(
             }
 
 
+        _answer = res.get("answer", "")
+        _ref_str = ref if isinstance(ref, str) else (ref[0] if isinstance(ref, list) and ref else "")
         row = {
             "qid": qid,
             "question": q,
             "reference": ref,
-            "answer": res.get("answer",""),
+            "answer": _answer,
             "faithfulness": _num(res.get("faithfulness_score", 0.0)),
             "response_relevancy": _num(res.get("response_relevancy", 0.0)),
             "noise_sensitivity": _num(res.get("noise_sensitivity", 1.0)),
             "semantic_f1": _num(res.get("semantic_f1_score", res.get("semantic_f1", 0.0))),
             "context_precision": _num(res.get("context_precision", 0.0)),
             "context_recall": _num(res.get("context_recall", 0.0)),
+            "em": _exact_match(_answer, _ref_str) if _ref_str else 0.0,
+            "official_f1": _token_f1(_answer, _ref_str) if _ref_str else 0.0,
             "generation_time_ms": _num(res.get("metrics",{}).get("generation_time", 0.0)),
             "retrieval_time_ms": _num(res.get("metrics",{}).get("retrieval_time", 0.0)),
             "total_time_ms": _num(res.get("metrics",{}).get("total_time", 0.0)),
@@ -286,8 +320,9 @@ def run_dataset_and_collect(
             csv.writer(f).writerow([
                 row["qid"], row["question"], row["reference"], row["answer"],
                 row["faithfulness"], row["response_relevancy"], row["noise_sensitivity"], row["semantic_f1"],
-                row["context_precision"], row["context_recall"], row["doc_count"],
-                row["generation_time_ms"], row["retrieval_time_ms"], row["total_time_ms"]
+                row["context_precision"], row["context_recall"],
+                row["em"], row["official_f1"],
+                row["doc_count"], row["generation_time_ms"], row["retrieval_time_ms"], row["total_time_ms"]
             ])
         print(f"📝 saved trajectory: {qid}")
 

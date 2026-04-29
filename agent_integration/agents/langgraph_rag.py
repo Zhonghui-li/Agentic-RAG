@@ -728,7 +728,7 @@ def create_rag_graph(
     # ---- Adaptive Retrieval Router ----
     # BC retrieval router (lazy-loaded; falls back to hard rule if no policy)
     _retrieval_router_bc = RetrievalRouterBC(
-        policy_path=os.path.join(os.path.dirname(__file__), "retrieval_router_policy.pt")
+        policy_path=os.path.join(os.path.dirname(__file__), "offline_rl_router_policy_v2.pt")
     )
 
     def retrieval_router_node(state: AgentState) -> AgentState:
