@@ -6,7 +6,8 @@ from flask import jsonify
 import datetime
 from typing import Optional, Dict, Any
 
-CONV_COLLECTION = mongo.db.conversations
+def CONV_COLLECTION():
+    return mongo.db.conversations
 
 
 def is_valid_objectid(object_id) -> bool:
@@ -22,7 +23,7 @@ def get_conversation(conv_id):
     """Get a conversation by its ID."""
     try:
         print(conv_id)
-        conversation = CONV_COLLECTION.find_one(ObjectId(conv_id))
+        conversation = CONV_COLLECTION().find_one(ObjectId(conv_id))
         print(conversation["_id"])
         print(conversation)
         try:
@@ -48,7 +49,7 @@ def add_conversation(user_id, text, time, provider="openai", model=None):
     Returns:
         The ID of the created conversation
     """
-    conversation_id = CONV_COLLECTION.insert_one(
+    conversation_id = CONV_COLLECTION().insert_one(
         {
             "user_id": ObjectId(user_id), 
             "text": text, 
@@ -63,13 +64,13 @@ def add_conversation(user_id, text, time, provider="openai", model=None):
 
 def get_all_conversations():
     """Get all conversations."""
-    conversations = CONV_COLLECTION.find()
+    conversations = CONV_COLLECTION().find()
     return [conversation_to_json(conversation) for conversation in conversations]
 
 
 def get_all_user_conversations(username):
     """Get all conversations for a specific user."""
-    conversations = CONV_COLLECTION.find(
+    conversations = CONV_COLLECTION().find(
         {"name": {"$exists": True}, "user": username},
         {"_id": 1, "name": 1, "user": 1, "last_modified": 1, "provider": 1, "model": 1}
     ).sort("last_modified", -1)
@@ -85,7 +86,7 @@ def conversation_to_json(conversation):
 def get_conversation_by_id(conv_id):
     """Get a conversation by its ID."""
     try:
-        conversation = CONV_COLLECTION.find_one({"_id": ObjectId(conv_id)})
+        conversation = CONV_COLLECTION().find_one({"_id": ObjectId(conv_id)})
         return conversation_to_json(conversation)
     except InvalidId:
         return False
@@ -94,7 +95,7 @@ def get_conversation_by_id(conv_id):
 def update_conversation_by_id(conv_id, updates):
     """Update a conversation by its ID."""
     try:
-        result = CONV_COLLECTION.update_one(
+        result = CONV_COLLECTION().update_one(
             {"_id": ObjectId(conv_id)}, {"$set": updates}
         )
         return result.matched_count > 0
@@ -105,7 +106,7 @@ def update_conversation_by_id(conv_id, updates):
 def delete_conversation_by_id(conv_id):
     """Delete a conversation by its ID."""
     try:
-        result = CONV_COLLECTION.delete_one({"_id": ObjectId(conv_id)})
+        result = CONV_COLLECTION().delete_one({"_id": ObjectId(conv_id)})
         return result.deleted_count > 0
     except InvalidId:
         return False
@@ -172,7 +173,7 @@ def create_new_conversation(user_id, name, first_message, provider="openai", mod
         "last_modified": datetime.datetime.now(tz=datetime.timezone.utc)
     }
     
-    conversation_id = CONV_COLLECTION.insert_one(conversation).inserted_id
+    conversation_id = CONV_COLLECTION().insert_one(conversation).inserted_id
     return str(conversation_id)
 
 
@@ -205,12 +206,12 @@ def get_conversation_stats():
         Dictionary with provider and model statistics
     """
     # Count by provider
-    provider_stats = list(CONV_COLLECTION.aggregate([
+    provider_stats = list(CONV_COLLECTION().aggregate([
         {"$group": {"_id": "$provider", "count": {"$sum": 1}}}
     ]))
     
     # Count by model
-    model_stats = list(CONV_COLLECTION.aggregate([
+    model_stats = list(CONV_COLLECTION().aggregate([
         {"$group": {"_id": "$model", "count": {"$sum": 1}}}
     ]))
     

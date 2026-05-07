@@ -1,8 +1,9 @@
+import { BACKEND_URL } from '@/lib/apiConfig';
 import type { Conversation } from '@/components/UserInput/types';
 
 async function getOneConversation(conv_id: string) {
   try {
-    const response = await fetch(`http://127.0.0.1:5001/conversation/${conv_id}`, {
+    const response = await fetch(`${BACKEND_URL}/conversation/${conv_id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

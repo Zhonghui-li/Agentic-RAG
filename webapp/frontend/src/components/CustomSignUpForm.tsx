@@ -1,3 +1,4 @@
+import { BACKEND_URL } from '@/lib/apiConfig';
 import { Button, TextField, Typography, Box, Link } from '@mui/material';
 import type React from 'react';
 import { useState, useContext } from 'react';
@@ -19,7 +20,7 @@ const CustomSignUpForm: React.FC<CustomSignUpFormProps> = ({ onClose, switchToSi
 
   const handleSignUp = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5001/user', {
+      const response = await fetch(`${BACKEND_URL}/user`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, user_id: userId, password }),

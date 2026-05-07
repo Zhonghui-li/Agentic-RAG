@@ -1,3 +1,4 @@
+import { BACKEND_URL } from '@/lib/apiConfig';
 import { useState, useRef, useEffect, useContext } from 'react';
 
 import { AuthContext } from '@/auth/AuthProvider';
@@ -81,7 +82,7 @@ export const useChatHandler = () => {
         setMessages((prevMessages) => [...prevMessages, { role: 'bot', content: '' }]);
 
         try {
-          const res = await fetch('http://127.0.0.1:5001/get_response_stream', {
+          const res = await fetch(`${BACKEND_URL}/get_response_stream`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -172,7 +173,7 @@ export const useChatHandler = () => {
         } catch (streamError) {
           console.error('Streaming error:', streamError);
           // Fallback to non-streaming if streaming fails
-          const res = await fetch('http://127.0.0.1:5001/get_response', {
+          const res = await fetch(`${BACKEND_URL}/get_response`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -212,7 +213,7 @@ export const useChatHandler = () => {
 
       setTextInput('');
 
-      const res = await fetch('http://127.0.0.1:5001/get_response', {
+      const res = await fetch(`${BACKEND_URL}/get_response`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

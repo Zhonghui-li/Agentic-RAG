@@ -1,3 +1,4 @@
+import { BACKEND_URL } from '@/lib/apiConfig';
 import { Box, Typography, Modal, TextField, Button, Divider } from '@mui/material';
 import { X } from 'lucide-react';
 import { useState, useContext } from 'react';
@@ -58,7 +59,7 @@ const MyAccountPopup: React.FC<MyAccountPopupProps> = ({ open, handleClose }) =>
     }
 
     try {
-      const response = await fetch('http://127.0.0.1:5001/api/user/update', {
+      const response = await fetch(`${BACKEND_URL}/api/user/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user: authContext?.user, newUsername }), // Removed userId
@@ -97,7 +98,7 @@ const MyAccountPopup: React.FC<MyAccountPopupProps> = ({ open, handleClose }) =>
     }
 
     try {
-      const response = await fetch('http://127.0.0.1:5001/api/user/change-password', {
+      const response = await fetch(`${BACKEND_URL}/api/user/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

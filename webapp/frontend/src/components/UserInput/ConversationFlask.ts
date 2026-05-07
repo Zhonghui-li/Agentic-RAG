@@ -1,8 +1,9 @@
+import { BACKEND_URL } from '@/lib/apiConfig';
 import type { Conv_Confirm } from './types';
 
 async function StartNewConversation(userName: string, name: string) {
   try {
-    const response = await fetch('http://127.0.0.1:5001/new_conversation', {
+    const response = await fetch(`${BACKEND_URL}/new_conversation`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

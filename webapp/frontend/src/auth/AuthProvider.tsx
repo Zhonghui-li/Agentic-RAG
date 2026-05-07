@@ -1,3 +1,4 @@
+import { BACKEND_URL } from '@/lib/apiConfig';
 import { setCookie, parseCookies, destroyCookie } from 'nookies';
 import type { ReactNode } from 'react';
 import { createContext, useState, useEffect } from 'react';
@@ -65,7 +66,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuth = async (userId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:5001/api/auth/check/${userId}`);
+      const response = await fetch(`${BACKEND_URL}/api/auth/check/${userId}`);
       if (response.ok) {
         const data = (await response.json()) as AuthResponse;
         setIsAuthenticated(data.isAuthenticated);

@@ -441,3 +441,7 @@ rank-bm25>=0.2.2
     # via agents.hybrid_retriever (BM25 sparse retrieval)
 sentence-transformers>=2.2.0
     # via agents.reranker (cross-encoder reranking)
+redis>=4.6.0
+    # via rag_service/main.py (caching layer)
+prometheus-client>=0.17.0
+    # via rag_service/main.py (metrics)

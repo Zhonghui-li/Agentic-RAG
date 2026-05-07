@@ -276,6 +276,7 @@ class RetrievalAgent:
                     all_docs.extend(self._normalize_docs(raw))
             docs = all_docs
         except Exception as e:
+            print(f"[RetrievalAgent] retrieval FAILED: {type(e).__name__}: {e}")
             if self.logger:
                 self.logger.add_tool_call(type="retrieval_error", query=query, topk=self.top_k, error=str(e))
             return {

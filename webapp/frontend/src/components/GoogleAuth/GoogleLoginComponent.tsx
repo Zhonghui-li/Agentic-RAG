@@ -1,3 +1,4 @@
+import { BACKEND_URL } from '@/lib/apiConfig';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import type { CredentialResponse } from '@react-oauth/google';
 import dotenv from 'dotenv';
@@ -17,7 +18,7 @@ const GoogleLoginComponent: React.FC = () => {
   const onSuccess = async (credentialResponse: CredentialResponse) => {
     console.log('Login Success:', credentialResponse);
     if (credentialResponse.credential) {
-      const response = await fetch('http://127.0.0.1:5001/api/auth/google', {
+      const response = await fetch(`${BACKEND_URL}/api/auth/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

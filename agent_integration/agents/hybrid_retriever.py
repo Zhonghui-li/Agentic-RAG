@@ -73,7 +73,11 @@ class HybridRetriever:
         Fusion score is stored in ``metadata["score"]``.
         """
         # --- Dense retrieval (FAISS) ---
-        faiss_results = self.vectorstore.similarity_search_with_score(query, k=k)
+        faiss_results = []
+        try:
+            faiss_results = self.vectorstore.similarity_search_with_score(query, k=k)
+        except Exception as _e:
+            print(f"[HybridRetriever] FAISS embedding failed ({_e}), falling back to BM25 only")
         # faiss_results: list of (Document, distance) — lower distance = better
 
         # --- Sparse retrieval (BM25) ---

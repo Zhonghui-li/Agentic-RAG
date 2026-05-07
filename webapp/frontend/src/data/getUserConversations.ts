@@ -1,3 +1,4 @@
+import { BACKEND_URL } from '@/lib/apiConfig';
 import type { UserConversation } from '@/components/types';
 
 async function getUserConversations(user: string) {
@@ -8,7 +9,7 @@ async function getUserConversations(user: string) {
   }
 
   try {
-    const response = await fetch(`http://127.0.0.1:5001/conversation/user/${user}`, {
+    const response = await fetch(`${BACKEND_URL}/conversation/user/${user}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

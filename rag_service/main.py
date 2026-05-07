@@ -46,11 +46,48 @@ from agents.hybrid_retriever import HybridRetriever
 from agents.multi_query import generate_query_variants
 
 from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
 from langchain_core.callbacks.base import BaseCallbackHandler
 from langchain_core.outputs import LLMResult
 from dspy.evaluate import SemanticF1
 import dspy
+import requests as _requests
+
+
+class _DirectOpenAILLM:
+    """Thin LLM wrapper using requests (avoids httpx issues) exposing .invoke()."""
+
+    def __init__(self, model: str, api_key: str, max_tokens: int = 512, temperature: float = 0.0, timeout: float = 60.0):
+        self._model = model
+        self.model_name = model  # compat with LangChain introspection
+        self._api_key = api_key
+        self._max_tokens = max_tokens
+        self._temperature = temperature
+        self._timeout = timeout
+
+    def invoke(self, prompt: str):
+        resp = _requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {self._api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": self._model,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": self._max_tokens,
+                "temperature": self._temperature,
+            },
+            timeout=self._timeout,
+        )
+        resp.raise_for_status()
+        content = resp.json()["choices"][0]["message"]["content"]
+
+        class _Msg:
+            def __init__(self, c):
+                self.content = c
+
+        return _Msg(content)
 
 
 # Global agents (initialized on startup)
@@ -65,7 +102,7 @@ _cache_embeddings: Optional[OpenAIEmbeddings] = None
 SEMANTIC_CACHE_THRESHOLD = float(os.getenv("SEMANTIC_CACHE_THRESHOLD", "0.95"))
 
 # Guardrails scope checker LLM (initialized on startup)
-_scope_llm: Optional[ChatOpenAI] = None
+_scope_llm: Optional[_DirectOpenAILLM] = None
 GUARDRAILS_ENABLED = os.getenv("GUARDRAILS_ENABLED", "true").lower() == "true"
 CORPUS_DESCRIPTION = os.getenv(
     "CORPUS_DESCRIPTION",
@@ -303,7 +340,7 @@ def init_agents():
     global _agents, _scope_llm
 
     # Environment variables
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    OPENAI_API_KEY = "".join((os.getenv("OPENAI_API_KEY") or "").split())
     if not OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY environment variable is required")
 
@@ -330,39 +367,33 @@ def init_agents():
 
     # Scope checker LLM (cheap: gpt-3.5-turbo, only needs yes/no)
     if GUARDRAILS_ENABLED:
-        _scope_llm = ChatOpenAI(
+        _scope_llm = _DirectOpenAILLM(
             model="gpt-3.5-turbo",
             api_key=OPENAI_API_KEY,
-            base_url="https://api.openai.com/v1",
-            temperature=0.0,
             max_tokens=5,
+            temperature=0.0,
             timeout=10.0,
         )
         print(f"  - Guardrails enabled (corpus: {CORPUS_DESCRIPTION[:60]}...)")
     else:
         print("  - Guardrails disabled")
 
-    # Generation LLM
-    gen_llm = ChatOpenAI(
+    # Generation LLM (direct openai SDK — avoids LangChain httpx issues in Cloud Run)
+    gen_llm = _DirectOpenAILLM(
         model=os.getenv("GEN_LLM_MODEL", "gpt-3.5-turbo"),
         api_key=OPENAI_API_KEY,
-        base_url="https://api.openai.com/v1",
-        temperature=0.0,
         max_tokens=int(os.getenv("GEN_MAX_TOKENS", "512")),
+        temperature=0.0,
         timeout=60.0,
-        callbacks=[_TokenTrackingCallback("pipeline")],
     )
 
-    # Evaluation LLM
-    eval_llm = ChatOpenAI(
+    # Evaluation LLM (direct openai SDK)
+    eval_llm = _DirectOpenAILLM(
         model=os.getenv("EVAL_LLM_MODEL", "gpt-3.5-turbo"),
         api_key=OPENAI_API_KEY,
-        base_url="https://api.openai.com/v1",
-        temperature=0.0,
         max_tokens=int(os.getenv("EVAL_MAX_TOKENS", "1024")),
+        temperature=0.0,
         timeout=60.0,
-        max_retries=int(os.getenv("EVAL_MAX_RETRIES", "0")),
-        callbacks=[_TokenTrackingCallback("pipeline")],
     )
 
     # Embeddings
@@ -421,7 +452,7 @@ def init_redis():
     try:
         _redis_client = redis.from_url(redis_url, decode_responses=True)
         _redis_client.ping()
-        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+        OPENAI_API_KEY = "".join((os.getenv("OPENAI_API_KEY") or "").split())
         _cache_embeddings = OpenAIEmbeddings(
             model=os.getenv("EMB_MODEL", "text-embedding-ada-002"),
             api_key=OPENAI_API_KEY,
@@ -583,15 +614,19 @@ async def query(request: QueryRequest):
         pipeline_start = time.time()
         lm = dspy.settings.lm
         history_before = len(lm.history) if lm and hasattr(lm, 'history') else 0
-        result = run_rag_pipeline(
-            question=request.question,
-            retrieval_agent=_agents["retrieval"],
-            reasoning_agent=_agents["reasoning"],
-            generation_agent=_agents["generation"],
-            evaluation_agent=_agents["evaluation"],
-            use_router=request.use_router,
-            visualize=False,
-            conversation_context=conv_context,
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            lambda: run_rag_pipeline(
+                question=request.question,
+                retrieval_agent=_agents["retrieval"],
+                reasoning_agent=_agents["reasoning"],
+                generation_agent=_agents["generation"],
+                evaluation_agent=_agents["evaluation"],
+                use_router=request.use_router,
+                visualize=False,
+                conversation_context=conv_context,
+            )
         )
         PIPELINE_STAGE_LATENCY.labels(stage="full_pipeline").observe(time.time() - pipeline_start)
         if lm and hasattr(lm, 'history'):
@@ -752,5 +787,5 @@ async def query_stream(request: QueryRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("RAG_SERVICE_PORT", "8001"))
+    port = int(os.getenv("PORT", os.getenv("RAG_SERVICE_PORT", "8001")))
     uvicorn.run(app, host="0.0.0.0", port=port)

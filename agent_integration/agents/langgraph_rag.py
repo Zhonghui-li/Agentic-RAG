@@ -849,7 +849,9 @@ def _ircot_retrieve(question, retrieval_agent, llm, max_hops=3, top_k_per_hop=5,
                 "If we already have enough information, respond with exactly: DONE\n\n"
                 "Search query:"
             )
-            resp = llm.invoke(cot_prompt)
+            import concurrent.futures as _cf
+            with _cf.ThreadPoolExecutor(max_workers=1) as _ex:
+                resp = _ex.submit(llm.invoke, cot_prompt).result(timeout=30)
             hop_query = (getattr(resp, "content", None) or str(resp)).strip()
             if "DONE" in hop_query.upper():
                 break
@@ -880,7 +882,9 @@ def _ircot_retrieve(question, retrieval_agent, llm, max_hops=3, top_k_per_hop=5,
             "Write a brief note (1-2 sentences): what do we now know, "
             "and what's still missing to answer the question?"
         )
-        resp = llm.invoke(extract_prompt)
+        import concurrent.futures as _cf
+        with _cf.ThreadPoolExecutor(max_workers=1) as _ex:
+            resp = _ex.submit(llm.invoke, extract_prompt).result(timeout=30)
         hop_reasoning = (getattr(resp, "content", None) or str(resp)).strip()
         reasoning_trace += f"\n[Hop {hop+1}] {hop_reasoning}"
 
@@ -1200,7 +1204,9 @@ def run_rag_pipeline(
                         "from this question. Return them as a single search query.\n\n"
                         f"Question: {base_q}"
                     )
-                    resp = llm.invoke(kw_prompt)
+                    import concurrent.futures as _cf
+                    with _cf.ThreadPoolExecutor(max_workers=1) as _ex:
+                        resp = _ex.submit(llm.invoke, kw_prompt).result(timeout=30)
                     kw_query = (getattr(resp, "content", None) or str(resp)).strip()
                 except Exception:
                     pass
