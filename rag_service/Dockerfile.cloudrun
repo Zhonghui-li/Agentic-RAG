@@ -1,0 +1,33 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies + gcloud SDK for gsutil
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    gnupg \
+    && curl https://sdk.cloud.google.com | bash -s -- --disable-prompts \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/google-cloud-sdk/bin:${PATH}"
+
+# Copy agent_integration code (without vectorstore)
+COPY agent_integration /app/agent_integration
+
+# Copy rag_service code
+COPY rag_service /app/rag_service
+
+# Install Python dependencies
+COPY agent_integration/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Startup script: download FAISS from GCS then start service
+COPY rag_service/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+WORKDIR /app/rag_service
+
+EXPOSE 8080
+
+CMD ["/app/start.sh"]

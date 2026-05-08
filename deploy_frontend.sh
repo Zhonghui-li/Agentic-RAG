@@ -1,6 +1,6 @@
 #!/bin/bash
 gcloud run deploy frontend-service \
-  --image us-central1-docker.pkg.dev/proslm/proslm-repo/frontend-service:v1 \
+  --image us-central1-docker.pkg.dev/proslm/proslm-repo/frontend-service:v2 \
   --region us-central1 \
   --platform managed \
   --memory 512Mi \

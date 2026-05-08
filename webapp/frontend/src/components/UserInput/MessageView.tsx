@@ -45,11 +45,12 @@ export function MessageView(props: Message) {
         <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, paddingRight: 1 }}>
           <Typography
             sx={{
-              color: isDark ? '#ffffff' : '#000000',
+              color: props.content === '' ? (isDark ? '#a1a1b7' : '#8d99ae') : (isDark ? '#ffffff' : '#000000'),
+              fontStyle: props.content === '' ? 'italic' : 'normal',
             }}
             variant="body1"
           >
-            {props.content}
+            {props.content === '' ? 'Thinking...' : props.content}
           </Typography>
           {props.sources && props.sources.length > 0 && (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>

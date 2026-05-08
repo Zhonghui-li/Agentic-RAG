@@ -190,6 +190,15 @@ export const useChatHandler = () => {
               newMessages[botMessageIndex] = { role: 'bot', content: responseMessage };
               return newMessages;
             });
+          } else {
+            setMessages((prevMessages) => {
+              const newMessages = [...prevMessages];
+              newMessages[botMessageIndex] = {
+                role: 'bot',
+                content: 'An error occurred while fetching the response.',
+              };
+              return newMessages;
+            });
           }
         }
         return;
@@ -252,7 +261,6 @@ export const useChatHandler = () => {
       console.log(error);
       setMessages((prevMessages) => [
         ...prevMessages,
-        { role: 'bot', content: textInput },
         { role: 'bot', content: 'An error occurred while fetching the response.' },
       ]);
     } finally {
