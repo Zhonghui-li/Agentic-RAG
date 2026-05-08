@@ -150,8 +150,5 @@ curl -s -X POST http://127.0.0.1:5001/get_response \
 
 ## Hosting / Production
 
-For Docker Compose setup and cloud deployment, see [`rag-service-schema.md`](./rag-service-schema.md). It covers:
-- `docker-compose up` to run all services in containers
-- Environment variables and their defaults
-- Infrastructure requirements (CPU, memory, storage)
-- Open questions for the hosting team (vector store strategy, API key management, CORS origin)
+- **GCP Cloud Run deployment**: see [`gcp-cloud-run-deployment.md`](./gcp-cloud-run-deployment.md) — how to build, push, and deploy all three services to Cloud Run, manage secrets, and troubleshoot common issues.
+- **Docker Compose / infrastructure**: see [`rag-service-schema.md`](./rag-service-schema.md) — environment variables, resource requirements, and vector store setup.
