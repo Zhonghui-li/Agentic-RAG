@@ -1,0 +1,27 @@
+{
+  "academic_year": "2025-26",
+  "_source": "registrar.ucsc.edu/calendar",
+  "quarters": {
+    "Fall 2025": {
+      "instruction_begins": "2025-09-25",
+      "instruction_ends": "2025-12-05",
+      "final_exams": "2025-12-08/2025-12-12",
+      "quarter_ends": "2025-12-12",
+      "priority_enrollment_begins": "2025-05-19"
+    },
+    "Winter 2026": {
+      "instruction_begins": "2026-01-05",
+      "instruction_ends": "2026-03-13",
+      "final_exams": "2026-03-16/2026-03-20",
+      "quarter_ends": "2026-03-20",
+      "priority_enrollment_begins": "2025-11-13"
+    },
+    "Spring 2026": {
+      "instruction_begins": "2026-03-30",
+      "instruction_ends": "2026-06-05",
+      "final_exams": "2026-06-08/2026-06-11",
+      "quarter_ends": "2026-06-11",
+      "priority_enrollment_begins": "2026-02-26"
+    }
+  }
+}

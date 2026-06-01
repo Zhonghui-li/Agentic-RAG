@@ -38,6 +38,8 @@ artifacts/
 !package.json
 !package-lock.json
 !tsconfig.json
+# UCSC Slug Advisor dataset (small, real, needed by pipeline/CI)
+!agent_integration/data-ucsc/*.json
 *.pkl
 *.h5
 *.pt
