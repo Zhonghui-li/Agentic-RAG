@@ -87,25 +87,27 @@ def gen_schedule(schedule):
 def gen_calendar(calendar):
     items = []
     q = calendar["quarters"]
+    # Dates use natural "Month D" form; the grader canonicalizes dates, so it
+    # also matches ISO ("2026-01-05") surface forms in the answer.
     items.append({
         "question": "When does Winter 2026 instruction begin?",
         "category": "calendar",
         "expected_tool": "get_academic_calendar",
-        "answer_facts": ["January 5", "2026-01-05"],  # grader accepts either form
+        "answer_facts": ["January 5"],
         "gold_source": [],
     })
     items.append({
         "question": "When are Fall 2025 final exams?",
         "category": "calendar",
         "expected_tool": "get_academic_calendar",
-        "answer_facts": ["December 8", "December 12", "12-08", "12-12"],
+        "answer_facts": ["December 8", "December 12"],
         "gold_source": [],
     })
     items.append({
         "question": "When does priority enrollment for Spring 2026 begin?",
         "category": "calendar",
         "expected_tool": "get_academic_calendar",
-        "answer_facts": ["February 26", "2026-02-26"],
+        "answer_facts": ["February 26"],
         "gold_source": [],
     })
     return items
