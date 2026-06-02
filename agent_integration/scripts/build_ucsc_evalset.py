@@ -135,6 +135,62 @@ HANDWRITTEN = [
      "answer_facts": ["CSE 242"], "gold_source": ["CSE 242"]},
 ]
 
+# Harder, discriminating questions (verified against cse_courses.json). These
+# stress the system where the easy templated set doesn't: questions that DON'T
+# name the course (so retrieval must actually find it -> context recall becomes
+# meaningful), prerequisite chains, comparisons, out-of-scope -> web_search, and
+# date arithmetic. Empty answer_facts => answer graded N/A (tool-selection only).
+HARD = [
+    # --- find-the-course: no course code given -> real retrieval ---
+    {"question": "Which course is an introduction to computer graphics?",
+     "category": "find_course", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 160"], "gold_source": ["CSE 160"]},
+    {"question": "Which lower-division course covers machine learning basics and data analysis?",
+     "category": "find_course", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 40"], "gold_source": ["CSE 40"]},
+    {"question": "Which upper-division course teaches computer architecture?",
+     "category": "find_course", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 120"], "gold_source": ["CSE 120"]},
+    {"question": "Which course teaches computer vision?",
+     "category": "find_course", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 164"], "gold_source": ["CSE 164"]},
+    {"question": "Which course covers deep learning?",
+     "category": "find_course", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 144"], "gold_source": ["CSE 144"]},
+    {"question": "Which course is about computer security?",
+     "category": "find_course", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 132"], "gold_source": ["CSE 132"]},
+    # --- comparison: retrieve two courses and compare ---
+    {"question": "Which has more credits, CSE 13S or CSE 101?",
+     "category": "comparison", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 13S"], "gold_source": ["CSE 13S", "CSE 101"]},
+    {"question": "Which is worth more credits: CSE 160 or CSE 162?",
+     "category": "comparison", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 160"], "gold_source": ["CSE 160", "CSE 162"]},
+    # --- multi-hop prerequisite chain: repeated search_catalog ---
+    {"question": "I've taken no CS courses yet. Trace the prerequisite chain back from CSE 142 to the earliest course I'd need.",
+     "category": "multi_hop", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 101", "CSE 12"], "gold_source": ["CSE 142", "CSE 101"]},
+    {"question": "What is the prerequisite of the prerequisite of CSE 130?",
+     "category": "multi_hop", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 12"], "gold_source": ["CSE 130", "CSE 101"]},
+    # --- out-of-scope -> should escalate to web_search (answer graded N/A) ---
+    {"question": "Who is the current chair of the UCSC Computer Science and Engineering department?",
+     "category": "out_of_scope", "expected_tool": "web_search",
+     "answer_facts": [], "gold_source": []},
+    {"question": "What is the acceptance rate for UCSC's computer science program?",
+     "category": "out_of_scope", "expected_tool": "web_search",
+     "answer_facts": [], "gold_source": []},
+    # --- date arithmetic (Dec 5 2025 -> Jan 5 2026 = 31 days) ---
+    {"question": "How many days are there between the end of Fall 2025 instruction and the start of Winter 2026 instruction?",
+     "category": "date_math", "expected_tool": "get_academic_calendar",
+     "answer_facts": ["31"], "gold_source": []},
+    # --- negative / honesty: CSE 999 does not exist (answer graded N/A) ---
+    {"question": "Is CSE 999 offered in Winter 2026?",
+     "category": "negative", "expected_tool": "lookup_schedule",
+     "answer_facts": [], "gold_source": []},
+]
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -152,6 +208,7 @@ def main():
     items += gen_schedule(schedule)
     items += gen_calendar(calendar)
     items += HANDWRITTEN
+    items += HARD
 
     for i, it in enumerate(items):
         it["id"] = f"ucsc_{i:03d}"

@@ -50,8 +50,10 @@ def main():
     for i, it in enumerate(items):
         try:
             answer, tools, sc_out = run_one(agent, it["question"])
-            missing = answer_correct(answer, it["answer_facts"])
-            a_ok = not missing
+            facts = it.get("answer_facts") or []
+            # empty answer_facts (e.g. out-of-scope/web_search items) -> answer N/A
+            missing = answer_correct(answer, facts) if facts else []
+            a_ok = (not missing) if facts else None
             t_ok = tool_selection_ok(tools, it["expected_tool"])
             gs = it.get("gold_source") or []
             c_ok = context_recall_hit(sc_out, gs) if (gs and "search_catalog" in tools) else None
@@ -62,8 +64,9 @@ def main():
             rows.append({"id": it["id"], "category": it["category"], "question": it["question"],
                          "ans": False, "tool": False, "ctx": None, "_err": f"{type(e).__name__}: {e}"})
         r = rows[-1]
+        failed = (r.get("ans") is False) or (r.get("tool") is False)
         print(f"[{i+1}/{len(items)}] {r['id']} ans={r['ans']} tool={r['tool']} ctx={r['ctx']}"
-              + ("" if (r['ans'] and r['tool']) else "  <-- FAIL"))
+              + ("  <-- FAIL" if failed else ""))
 
     elapsed = round(time.time() - t0, 1)
     metrics = {
@@ -89,7 +92,7 @@ def main():
     for c, m in by_cat.items():
         print(f"  {c:14} n={m['n']:2}  answer={m['answer']}%  tool={m['tool']}%")
 
-    fails = [r for r in rows if not (r.get("ans") and r.get("tool"))]
+    fails = [r for r in rows if (r.get("ans") is False) or (r.get("tool") is False)]
     if fails:
         print(f"\n=== {len(fails)} FAILURES ===")
         for r in fails:
