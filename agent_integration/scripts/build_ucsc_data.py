@@ -11,6 +11,7 @@ room, enrollment). This is representative data, flagged via the "_note" field,
 not live registrar data. The course identities, titles, and instructors are real.
 """
 import os
+import re
 import json
 import random
 import argparse
@@ -73,7 +74,9 @@ def synthesize_schedule(courses, seed=42):
             else:
                 status = "Open"
             start, end = rng.choice(TIME_SLOTS)
-            instructor = c.get("instructor") or "Staff"
+            # catalog instructor is sometimes comma-junk (", , ,") when TBA
+            raw_instr = c.get("instructor") or ""
+            instructor = raw_instr if re.sub(r"[,\s]", "", raw_instr) else "Staff"
             offerings.append({
                 "course_code": code,
                 "title": c["title"],
