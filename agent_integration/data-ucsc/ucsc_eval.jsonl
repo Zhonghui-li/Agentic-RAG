@@ -1,44 +1,44 @@
-{"question": "How many credits is CSE 3?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "id": "ucsc_000"}
-{"question": "How many credits is CSE 20?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "id": "ucsc_001"}
-{"question": "How many credits is CSE 30?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["7"], "id": "ucsc_002"}
-{"question": "How many credits is CSE 12?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["7"], "id": "ucsc_003"}
-{"question": "How many credits is CSE 13S?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["7"], "id": "ucsc_004"}
-{"question": "How many credits is CSE 16?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "id": "ucsc_005"}
-{"question": "How many credits is CSE 101?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "id": "ucsc_006"}
-{"question": "How many credits is CSE 102?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "id": "ucsc_007"}
-{"question": "How many credits is CSE 107?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "id": "ucsc_008"}
-{"question": "How many credits is CSE 120?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "id": "ucsc_009"}
-{"question": "How many credits is CSE 130?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "id": "ucsc_010"}
-{"question": "How many credits is CSE 142?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "id": "ucsc_011"}
-{"question": "What are the prerequisites for CSE 20?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["CSE 30"], "id": "ucsc_012"}
-{"question": "What are the prerequisites for CSE 30?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["AM 11A", "AM 3"], "id": "ucsc_013"}
-{"question": "What are the prerequisites for CSE 12?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["BME 160", "CSE 20"], "id": "ucsc_014"}
-{"question": "What are the prerequisites for CSE 13S?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["BME 160", "CSE 12"], "id": "ucsc_015"}
-{"question": "What are the prerequisites for CSE 16?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["AM 11B", "AM 15B"], "id": "ucsc_016"}
-{"question": "What are the prerequisites for CSE 101?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["AM 11B", "BME 160"], "id": "ucsc_017"}
-{"question": "What are the prerequisites for CSE 102?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["CSE 101M"], "id": "ucsc_018"}
-{"question": "What are the prerequisites for CSE 107?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["AM 30", "CSE 16"], "id": "ucsc_019"}
-{"question": "What are the prerequisites for CSE 120?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["CSE 12", "CSE 13E"], "id": "ucsc_020"}
-{"question": "What are the prerequisites for CSE 130?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["CSE 101", "CSE 12"], "id": "ucsc_021"}
-{"question": "What are the prerequisites for CSE 142?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["AM 30", "CSE 101"], "id": "ucsc_022"}
-{"question": "Is CSE 3 offered in Fall 2025, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["10:40", "TuTh"], "id": "ucsc_023"}
-{"question": "Is CSE 12 offered in Fall 2025, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["09:20", "TuTh"], "id": "ucsc_024"}
-{"question": "Is CSE 13S offered in Winter 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["09:20", "TuTh"], "id": "ucsc_025"}
-{"question": "Is CSE 16 offered in Winter 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["12:00", "MWF"], "id": "ucsc_026"}
-{"question": "Is CSE 20 offered in Fall 2025, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["10:40", "MW"], "id": "ucsc_027"}
-{"question": "Is CSE 30 offered in Spring 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["12:00", "MW"], "id": "ucsc_028"}
-{"question": "Is CSE 101 offered in Fall 2025, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["09:20", "TuTh"], "id": "ucsc_029"}
-{"question": "Is CSE 102 offered in Winter 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["14:40", "TuTh"], "id": "ucsc_030"}
-{"question": "Is CSE 107 offered in Winter 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["13:20", "MWF"], "id": "ucsc_031"}
-{"question": "Is CSE 120 offered in Winter 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["16:00", "TuTh"], "id": "ucsc_032"}
-{"question": "Is CSE 130 offered in Spring 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["09:20", "TuTh"], "id": "ucsc_033"}
-{"question": "Is CSE 142 offered in Fall 2025, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["16:00", "MWF"], "id": "ucsc_034"}
-{"question": "When does Winter 2026 instruction begin?", "category": "calendar", "expected_tool": "get_academic_calendar", "answer_facts": ["January 5", "2026-01-05"], "id": "ucsc_035"}
-{"question": "When are Fall 2025 final exams?", "category": "calendar", "expected_tool": "get_academic_calendar", "answer_facts": ["December 8", "December 12", "12-08", "12-12"], "id": "ucsc_036"}
-{"question": "When does priority enrollment for Spring 2026 begin?", "category": "calendar", "expected_tool": "get_academic_calendar", "answer_facts": ["February 26", "2026-02-26"], "id": "ucsc_037"}
-{"question": "I want to learn machine learning. Which CSE course should I take and what are its prerequisites?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["CSE 142", "CSE 101"], "id": "ucsc_038"}
-{"question": "What's the prerequisite for the machine learning course, and is it offered this fall?", "category": "multi_tool", "expected_tool": "multi", "answer_facts": ["CSE 101"], "id": "ucsc_039"}
-{"question": "Which lower-division course introduces programming in Python?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["CSE 20"], "id": "ucsc_040"}
-{"question": "Does CSE 130 require operating systems background? What are its prerequisites?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["CSE 101"], "id": "ucsc_041"}
-{"question": "How long is winter break between Fall 2025 and Winter 2026 instruction?", "category": "calendar", "expected_tool": "get_academic_calendar", "answer_facts": ["December 12", "January 5"], "id": "ucsc_042"}
-{"question": "Is there a machine learning course at the graduate level?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["CSE 242"], "id": "ucsc_043"}
+{"question": "How many credits is CSE 3?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "gold_source": ["CSE 3"], "id": "ucsc_000"}
+{"question": "How many credits is CSE 20?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "gold_source": ["CSE 20"], "id": "ucsc_001"}
+{"question": "How many credits is CSE 30?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["7"], "gold_source": ["CSE 30"], "id": "ucsc_002"}
+{"question": "How many credits is CSE 12?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["7"], "gold_source": ["CSE 12"], "id": "ucsc_003"}
+{"question": "How many credits is CSE 13S?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["7"], "gold_source": ["CSE 13S"], "id": "ucsc_004"}
+{"question": "How many credits is CSE 16?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "gold_source": ["CSE 16"], "id": "ucsc_005"}
+{"question": "How many credits is CSE 101?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "gold_source": ["CSE 101"], "id": "ucsc_006"}
+{"question": "How many credits is CSE 102?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "gold_source": ["CSE 102"], "id": "ucsc_007"}
+{"question": "How many credits is CSE 107?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "gold_source": ["CSE 107"], "id": "ucsc_008"}
+{"question": "How many credits is CSE 120?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "gold_source": ["CSE 120"], "id": "ucsc_009"}
+{"question": "How many credits is CSE 130?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "gold_source": ["CSE 130"], "id": "ucsc_010"}
+{"question": "How many credits is CSE 142?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["5"], "gold_source": ["CSE 142"], "id": "ucsc_011"}
+{"question": "What are the prerequisites for CSE 20?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["CSE 30"], "gold_source": ["CSE 20"], "id": "ucsc_012"}
+{"question": "What are the prerequisites for CSE 30?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["AM 11A", "AM 3"], "gold_source": ["CSE 30"], "id": "ucsc_013"}
+{"question": "What are the prerequisites for CSE 12?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["BME 160", "CSE 20"], "gold_source": ["CSE 12"], "id": "ucsc_014"}
+{"question": "What are the prerequisites for CSE 13S?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["BME 160", "CSE 12"], "gold_source": ["CSE 13S"], "id": "ucsc_015"}
+{"question": "What are the prerequisites for CSE 16?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["AM 11B", "AM 15B"], "gold_source": ["CSE 16"], "id": "ucsc_016"}
+{"question": "What are the prerequisites for CSE 101?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["AM 11B", "BME 160"], "gold_source": ["CSE 101"], "id": "ucsc_017"}
+{"question": "What are the prerequisites for CSE 102?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["CSE 101M"], "gold_source": ["CSE 102"], "id": "ucsc_018"}
+{"question": "What are the prerequisites for CSE 107?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["AM 30", "CSE 16"], "gold_source": ["CSE 107"], "id": "ucsc_019"}
+{"question": "What are the prerequisites for CSE 120?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["CSE 12", "CSE 13E"], "gold_source": ["CSE 120"], "id": "ucsc_020"}
+{"question": "What are the prerequisites for CSE 130?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["CSE 101", "CSE 12"], "gold_source": ["CSE 130"], "id": "ucsc_021"}
+{"question": "What are the prerequisites for CSE 142?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["AM 30", "CSE 101"], "gold_source": ["CSE 142"], "id": "ucsc_022"}
+{"question": "Is CSE 3 offered in Fall 2025, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["10:40", "TuTh"], "gold_source": ["CSE 3"], "id": "ucsc_023"}
+{"question": "Is CSE 12 offered in Fall 2025, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["09:20", "TuTh"], "gold_source": ["CSE 12"], "id": "ucsc_024"}
+{"question": "Is CSE 13S offered in Winter 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["09:20", "TuTh"], "gold_source": ["CSE 13S"], "id": "ucsc_025"}
+{"question": "Is CSE 16 offered in Winter 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["12:00", "MWF"], "gold_source": ["CSE 16"], "id": "ucsc_026"}
+{"question": "Is CSE 20 offered in Fall 2025, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["10:40", "MW"], "gold_source": ["CSE 20"], "id": "ucsc_027"}
+{"question": "Is CSE 30 offered in Spring 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["12:00", "MW"], "gold_source": ["CSE 30"], "id": "ucsc_028"}
+{"question": "Is CSE 101 offered in Fall 2025, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["09:20", "TuTh"], "gold_source": ["CSE 101"], "id": "ucsc_029"}
+{"question": "Is CSE 102 offered in Winter 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["14:40", "TuTh"], "gold_source": ["CSE 102"], "id": "ucsc_030"}
+{"question": "Is CSE 107 offered in Winter 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["13:20", "MWF"], "gold_source": ["CSE 107"], "id": "ucsc_031"}
+{"question": "Is CSE 120 offered in Winter 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["16:00", "TuTh"], "gold_source": ["CSE 120"], "id": "ucsc_032"}
+{"question": "Is CSE 130 offered in Spring 2026, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["09:20", "TuTh"], "gold_source": ["CSE 130"], "id": "ucsc_033"}
+{"question": "Is CSE 142 offered in Fall 2025, and what time does it meet?", "category": "schedule", "expected_tool": "lookup_schedule", "answer_facts": ["16:00", "MWF"], "gold_source": ["CSE 142"], "id": "ucsc_034"}
+{"question": "When does Winter 2026 instruction begin?", "category": "calendar", "expected_tool": "get_academic_calendar", "answer_facts": ["January 5", "2026-01-05"], "gold_source": [], "id": "ucsc_035"}
+{"question": "When are Fall 2025 final exams?", "category": "calendar", "expected_tool": "get_academic_calendar", "answer_facts": ["December 8", "December 12", "12-08", "12-12"], "gold_source": [], "id": "ucsc_036"}
+{"question": "When does priority enrollment for Spring 2026 begin?", "category": "calendar", "expected_tool": "get_academic_calendar", "answer_facts": ["February 26", "2026-02-26"], "gold_source": [], "id": "ucsc_037"}
+{"question": "I want to learn machine learning. Which CSE course should I take and what are its prerequisites?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["CSE 142", "CSE 101"], "gold_source": ["CSE 142"], "id": "ucsc_038"}
+{"question": "What's the prerequisite for the machine learning course, and is it offered this fall?", "category": "multi_tool", "expected_tool": "multi", "answer_facts": ["CSE 101"], "gold_source": ["CSE 142"], "id": "ucsc_039"}
+{"question": "Which lower-division course introduces programming in Python?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["CSE 20"], "gold_source": ["CSE 20"], "id": "ucsc_040"}
+{"question": "Does CSE 130 require operating systems background? What are its prerequisites?", "category": "prerequisites", "expected_tool": "search_catalog", "answer_facts": ["CSE 101"], "gold_source": ["CSE 130"], "id": "ucsc_041"}
+{"question": "How long is winter break between Fall 2025 and Winter 2026 instruction?", "category": "calendar", "expected_tool": "get_academic_calendar", "answer_facts": ["December 12", "January 5"], "gold_source": [], "id": "ucsc_042"}
+{"question": "Is there a machine learning course at the graduate level?", "category": "course_content", "expected_tool": "search_catalog", "answer_facts": ["CSE 242"], "gold_source": ["CSE 242"], "id": "ucsc_043"}

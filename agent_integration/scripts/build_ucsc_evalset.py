@@ -11,6 +11,9 @@ Schema per line:
     "id", "question", "category",
     "expected_tool",        # search_catalog | lookup_schedule | get_academic_calendar | multi
     "answer_facts": [...],  # substrings that must appear in a correct answer
+    "gold_source": [...],   # course code(s) that are the gold retrieval source for
+                            # this question; enables true context-recall scoring in
+                            # the eval harness. Empty for calendar-only questions.
   }
 """
 import os
@@ -39,6 +42,7 @@ def gen_course_content(courses):
             "category": "course_content",
             "expected_tool": "search_catalog",
             "answer_facts": [c["credits"]],
+            "gold_source": [code],
         })
     return items
 
@@ -58,6 +62,7 @@ def gen_prerequisites(courses):
             "expected_tool": "search_catalog",
             # require at least the first 2 prereq codes to appear
             "answer_facts": codes[:2],
+            "gold_source": [code],
         })
     return items
 
@@ -74,6 +79,7 @@ def gen_schedule(schedule):
             "category": "schedule",
             "expected_tool": "lookup_schedule",
             "answer_facts": [o["start_time"], o["days"]],
+            "gold_source": [code],
         })
     return items
 
@@ -86,18 +92,21 @@ def gen_calendar(calendar):
         "category": "calendar",
         "expected_tool": "get_academic_calendar",
         "answer_facts": ["January 5", "2026-01-05"],  # grader accepts either form
+        "gold_source": [],
     })
     items.append({
         "question": "When are Fall 2025 final exams?",
         "category": "calendar",
         "expected_tool": "get_academic_calendar",
         "answer_facts": ["December 8", "December 12", "12-08", "12-12"],
+        "gold_source": [],
     })
     items.append({
         "question": "When does priority enrollment for Spring 2026 begin?",
         "category": "calendar",
         "expected_tool": "get_academic_calendar",
         "answer_facts": ["February 26", "2026-02-26"],
+        "gold_source": [],
     })
     return items
 
@@ -106,22 +115,22 @@ def gen_calendar(calendar):
 HANDWRITTEN = [
     {"question": "I want to learn machine learning. Which CSE course should I take and what are its prerequisites?",
      "category": "course_content", "expected_tool": "search_catalog",
-     "answer_facts": ["CSE 142", "CSE 101"]},
+     "answer_facts": ["CSE 142", "CSE 101"], "gold_source": ["CSE 142"]},
     {"question": "What's the prerequisite for the machine learning course, and is it offered this fall?",
      "category": "multi_tool", "expected_tool": "multi",
-     "answer_facts": ["CSE 101"]},
+     "answer_facts": ["CSE 101"], "gold_source": ["CSE 142"]},
     {"question": "Which lower-division course introduces programming in Python?",
      "category": "course_content", "expected_tool": "search_catalog",
-     "answer_facts": ["CSE 20"]},
+     "answer_facts": ["CSE 20"], "gold_source": ["CSE 20"]},
     {"question": "Does CSE 130 require operating systems background? What are its prerequisites?",
      "category": "prerequisites", "expected_tool": "search_catalog",
-     "answer_facts": ["CSE 101"]},
+     "answer_facts": ["CSE 101"], "gold_source": ["CSE 130"]},
     {"question": "How long is winter break between Fall 2025 and Winter 2026 instruction?",
      "category": "calendar", "expected_tool": "get_academic_calendar",
-     "answer_facts": ["December 12", "January 5"]},
+     "answer_facts": ["December 12", "January 5"], "gold_source": []},
     {"question": "Is there a machine learning course at the graduate level?",
      "category": "course_content", "expected_tool": "search_catalog",
-     "answer_facts": ["CSE 242"]},
+     "answer_facts": ["CSE 242"], "gold_source": ["CSE 242"]},
 ]
 
 
