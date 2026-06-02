@@ -17,6 +17,11 @@ from typing import Dict, List
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
+from langgraph.errors import GraphRecursionError
+
+# Safety valve: cap how many agent<->tool super-steps a single question may take
+# (one tool-call round ≈ 2 super-steps). Prevents runaway loops / cost blowups.
+DEFAULT_RECURSION_LIMIT = 15
 
 from agents.slug_retrieval import search_catalog as _search_catalog
 from agents.slug_tools import (
@@ -73,13 +78,22 @@ def _extract_trace(messages) -> List[Dict]:
     return trace
 
 
-def run_advisor(question: str, agent=None, verbose: bool = False) -> Dict:
+def run_advisor(question: str, agent=None, verbose: bool = False,
+                recursion_limit: int = DEFAULT_RECURSION_LIMIT) -> Dict:
     """Run the agent on a question. Returns {answer, trace, tools_used}."""
     agent = agent or build_agent()
-    result = agent.invoke({"messages": [("user", question)]})
-    messages = result["messages"]
-    answer = messages[-1].content
-    trace = _extract_trace(messages)
+    try:
+        result = agent.invoke(
+            {"messages": [("user", question)]},
+            {"recursion_limit": recursion_limit},
+        )
+        messages = result["messages"]
+        answer = messages[-1].content
+        trace = _extract_trace(messages)
+    except GraphRecursionError:
+        answer = ("I wasn't able to resolve this within the step limit. "
+                  "Please try rephrasing or narrowing your question.")
+        trace = []
 
     if verbose:
         for step in trace:
