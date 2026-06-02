@@ -1,8 +1,11 @@
 """search_catalog: the retrieval tool for the Slug Advisor agent.
 
-This wraps the project's retrieval stack (dense FAISS retrieval over the UCSC
-catalog + CrossEncoder reranker) and returns the top course passages as text —
-it does NOT generate a final answer (the agent does that).
+This wraps the project's retrieval stack (hybrid BM25+FAISS retrieval with RRF
+fusion over the UCSC catalog + CrossEncoder reranker) and returns the top course
+passages as text — it does NOT generate a final answer (the agent does that).
+
+Hybrid (sparse BM25 + dense FAISS) matters here: course questions hinge on exact
+entities/codes like "CSE 101", which BM25 nails and dense vectors can blur.
 
 Multi-hop questions (e.g. prerequisite chains) are handled by the *agent*
 calling this tool repeatedly, not by IRCoT inside the tool. IRCoT remains
@@ -26,6 +29,7 @@ _EMB_MODEL = os.environ.get("EMB_MODEL", "text-embedding-3-small")
 _RERANK = os.environ.get("RERANK", "1") == "1"
 
 _vectorstore = None
+_hybrid = None
 _reranker = None
 
 
@@ -37,6 +41,15 @@ def _get_vectorstore():
             _VS_PATH, emb, allow_dangerous_deserialization=True
         )
     return _vectorstore
+
+
+def _get_hybrid():
+    """Lazy-build the hybrid (BM25+FAISS+RRF) retriever over the catalog."""
+    global _hybrid
+    if _hybrid is None:
+        from agents.hybrid_retriever import HybridRetriever
+        _hybrid = HybridRetriever(_get_vectorstore())
+    return _hybrid
 
 
 def _get_reranker():
@@ -56,9 +69,8 @@ def search_catalog(query: str, k: int = 4) -> str:
     """Search the UCSC CSE course catalog for course descriptions, prerequisites,
     credits, and requirements. Returns the most relevant course entries. Call it
     again with a different query to follow prerequisite chains (multi-hop)."""
-    vs = _get_vectorstore()
-    # over-retrieve, then rerank down to k
-    docs = vs.similarity_search(query, k=max(k * 3, k))
+    # hybrid (BM25 + FAISS + RRF) over-retrieve, then rerank down to k
+    docs = _get_hybrid().retrieve(query, k=max(k * 3, k))
 
     reranker = _get_reranker()
     if reranker and docs:
