@@ -1,0 +1,12 @@
+# What `gcloud builds submit` should NOT upload (it respects .gcloudignore, not
+# .dockerignore). Keeps the 353MB old hotpot vectorstore + caches out of the upload.
+.git/
+vectorstore-hotpot/
+runs/
+data-hotpot/
+trajectories/
+venv/
+**/__pycache__/
+**/*.pyc
+**/.DS_Store
+eval/results.json
