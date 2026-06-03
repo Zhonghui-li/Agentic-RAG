@@ -18,7 +18,12 @@
   .bot .bubble { background:#fff; border:1px solid #e3e6ea; }
   .bubble { display:inline-block; padding:10px 14px; border-radius:12px; max-width:90%;
             white-space:pre-wrap; line-height:1.45; text-align:left; }
-  .trace { margin-top:6px; font-size:12px; color:#5a6b7b; }
+  .trace { margin-top:8px; font-size:12px; color:#5a6b7b; }
+  .trace summary { cursor:pointer; color:#8a98a6; user-select:none; list-style:none; }
+  .trace summary::-webkit-details-marker { display:none; }
+  .trace summary:hover { color:var(--blue); }
+  .trace[open] summary { margin-bottom:6px; }
+  .trace-body { padding-left:2px; line-height:1.7; }
   .trace code { background:#eef1f4; padding:1px 5px; border-radius:4px; }
   .hint { color:#7a8896; font-size:13px; }
   form { max-width:760px; margin:0 auto; padding:0 18px 24px; display:flex; gap:8px; }
@@ -73,9 +78,11 @@ form.addEventListener('submit', async (e) => {
     const data = await r.json();
     let html = esc(data.answer || '(no answer)');
     if (data.trace && data.trace.length) {
+      const n = data.trace.length;
       const tools = data.trace.map(t =>
         '🔧 <code>' + esc(t.tool) + '(' + esc(JSON.stringify(t.args)) + ')</code>').join('<br>');
-      html += '<div class="trace">' + tools + '</div>';
+      html += '<details class="trace"><summary>🔧 ' + n + ' tool call' + (n > 1 ? 's' : '') +
+              ' · show reasoning</summary><div class="trace-body">' + tools + '</div></details>';
     }
     pending.querySelector('.bubble').innerHTML = html;
   } catch (err) {
