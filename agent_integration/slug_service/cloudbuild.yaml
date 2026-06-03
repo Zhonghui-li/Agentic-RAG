@@ -1,0 +1,9 @@
+# Cloud Build config: builds the slug_service image natively on GCP (amd64),
+# using the Dockerfile under slug_service/. Run from agent_integration/:
+#   gcloud builds submit --config slug_service/cloudbuild.yaml \
+#       --substitutions=_IMAGE=<image> .
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'slug_service/Dockerfile', '-t', '${_IMAGE}', '.']
+images:
+  - '${_IMAGE}'

@@ -1,0 +1,11 @@
+# Build context for the slug_service image — exclude everything the image doesn't
+# need (esp. the 353MB old hotpot vectorstore) so the context upload stays small.
+vectorstore-hotpot/
+runs/
+data-hotpot/
+trajectories/
+venv/
+**/__pycache__/
+**/*.pyc
+**/.DS_Store
+eval/results.json
