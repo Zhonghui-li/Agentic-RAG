@@ -210,6 +210,52 @@ RAGAS_CURATED = [
      "answer_facts": ["CSE 115A"], "gold_source": ["CSE 115D", "CSE 115B"]},
 ]
 
+# Coverage-matrix questions: deliberately fill empty cells (advising / eligibility /
+# ambiguity / policy / aggregation / subjective) to make the eval REALISTIC. Several
+# of these are expected to be hard or expose limitations (e.g. aggregation has no
+# supporting tool) — that's the point: a realistic eval must have headroom.
+# All answers verified against cse_courses.json / schedule.json.
+DIVERSE = [
+    # recommendation / advising (must surface a relevant course)
+    # open-ended -> answer_facts use OR-groups (any valid course passes); no single
+    # gold_source (several courses are legitimately relevant).
+    {"question": "I want to specialize in artificial intelligence. Which CSE courses should I take?",
+     "category": "recommendation", "expected_tool": "search_catalog",
+     "answer_facts": [["CSE 140", "CSE 142", "CSE 144", "CSE 164"]], "gold_source": []},
+    {"question": "I'm interested in cybersecurity. Which course should I take?",
+     "category": "recommendation", "expected_tool": "search_catalog",
+     "answer_facts": [["CSE 132", "CSE 108", "CSE 235", "CSE 233"]], "gold_source": []},
+    # eligibility (reason about completed courses vs prerequisites)
+    {"question": "I've completed CSE 12 and CSE 30. Am I eligible to enroll in CSE 101?",
+     "category": "eligibility", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 16"], "gold_source": ["CSE 101"]},
+    {"question": "I've finished CSE 20. Can I take CSE 30 next, or is something else required?",
+     "category": "eligibility", "expected_tool": "search_catalog",
+     "answer_facts": ["MATH"], "gold_source": ["CSE 30"]},
+    # ambiguity (several courses match -> pick the right intro)
+    {"question": "Which course should I take to start learning about databases?",
+     "category": "ambiguity", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 180"], "gold_source": ["CSE 180"]},
+    {"question": "I want an introductory algorithms course. Which one should I take?",
+     "category": "ambiguity", "expected_tool": "search_catalog",
+     "answer_facts": ["CSE 101"], "gold_source": ["CSE 101"]},
+    # policy (waitlist is in schedule data; P/NP is NOT in our data -> escalate)
+    {"question": "CSE 142 is full for Winter 2026. Is there a waitlist?",
+     "category": "policy", "expected_tool": "lookup_schedule",
+     "answer_facts": ["wait"], "gold_source": []},
+    {"question": "Can I take CSE 3 on a pass/no-pass (P/NP) basis?",
+     "category": "policy", "expected_tool": "web_search",
+     "answer_facts": [], "gold_source": []},
+    # aggregation: no tool counts offerings -> exposes a capability gap
+    {"question": "How many CSE courses are offered in Fall 2025?",
+     "category": "aggregation", "expected_tool": "lookup_schedule",
+     "answer_facts": ["96"], "gold_source": []},
+    # subjective / out-of-catalog -> escalate, don't fabricate
+    {"question": "Do students consider CSE 142 a difficult course?",
+     "category": "subjective", "expected_tool": "web_search",
+     "answer_facts": [], "gold_source": []},
+]
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -229,6 +275,7 @@ def main():
     items += HANDWRITTEN
     items += HARD
     items += RAGAS_CURATED
+    items += DIVERSE
 
     for i, it in enumerate(items):
         it["id"] = f"ucsc_{i:03d}"

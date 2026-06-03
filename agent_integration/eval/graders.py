@@ -92,9 +92,21 @@ def fact_matched(fact, answer):
     return fact.lower() in answer.lower()
 
 
+def _one_fact_ok(fact, answer):
+    # A fact may be a list = OR-group (any alternative is acceptable), used for
+    # open-ended questions like recommendations where several courses are valid.
+    if isinstance(fact, list):
+        return any(fact_matched(alt, answer) for alt in fact)
+    return fact_matched(fact, answer)
+
+
 def answer_correct(answer, facts):
-    """Return list of MISSING facts ([] means fully correct)."""
-    return [f for f in facts if not fact_matched(f, answer)]
+    """Return list of MISSING facts ([] means fully correct).
+
+    Each fact is required (AND); a fact that is itself a list is an OR-group
+    (any one alternative satisfies it).
+    """
+    return [f for f in facts if not _one_fact_ok(f, answer)]
 
 
 def tool_selection_ok(tools_used, expected_tool):
