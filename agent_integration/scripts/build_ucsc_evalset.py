@@ -25,6 +25,14 @@ import argparse
 FOCUS = ["CSE 3", "CSE 20", "CSE 30", "CSE 12", "CSE 13S", "CSE 16",
          "CSE 101", "CSE 102", "CSE 107", "CSE 120", "CSE 130", "CSE 142"]
 
+# For "abstain" items (policy / subjective / uncomputable): a correct answer
+# honestly admits the catalog doesn't cover it and redirects. One OR-group =
+# any honesty/redirect phrase suffices.
+HONESTY = [["not in", "does not", "doesn't", "do not have", "don't have",
+            "couldn't find", "could not find", "consult", "recommend checking",
+            "isn't available", "not available", "advising", "registrar",
+            "admissions", "no information"]]
+
 
 def _norm_prereq_codes(requirements: str):
     """Pull course codes out of a requirements string for fact-checking."""
@@ -236,17 +244,18 @@ DIVERSE = [
     {"question": "CSE 142 is full for Winter 2026. Is there a waitlist?",
      "category": "policy", "expected_tool": "lookup_schedule",
      "answer_facts": ["wait"], "gold_source": []},
+    # policy -> abstain (catalog has no P/NP info; admit + redirect, don't web_search)
     {"question": "Can I take CSE 3 on a pass/no-pass (P/NP) basis?",
-     "category": "policy", "expected_tool": "web_search",
-     "answer_facts": [], "gold_source": []},
-    # aggregation: no tool counts offerings -> exposes a capability gap
+     "category": "policy", "expected_tool": "abstain",
+     "answer_facts": HONESTY, "gold_source": []},
+    # aggregation -> abstain (no tool can count; admit instead of fabricating a total)
     {"question": "How many CSE courses are offered in Fall 2025?",
-     "category": "aggregation", "expected_tool": "lookup_schedule",
-     "answer_facts": ["96"], "gold_source": []},
-    # subjective / out-of-catalog -> escalate, don't fabricate
+     "category": "aggregation", "expected_tool": "abstain",
+     "answer_facts": HONESTY, "gold_source": []},
+    # subjective -> abstain (catalog has no difficulty ratings; admit + redirect)
     {"question": "Do students consider CSE 142 a difficult course?",
-     "category": "subjective", "expected_tool": "web_search",
-     "answer_facts": [], "gold_source": []},
+     "category": "subjective", "expected_tool": "abstain",
+     "answer_facts": HONESTY, "gold_source": []},
 ]
 
 

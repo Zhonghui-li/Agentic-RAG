@@ -110,6 +110,11 @@ def answer_correct(answer, facts):
 
 
 def tool_selection_ok(tools_used, expected_tool):
+    # "abstain": the right behavior is to honestly admit / redirect (for policy,
+    # subjective, or uncomputable questions). Any tool use—or none—is acceptable;
+    # correctness is judged by the answer (an honesty phrase), not the tool.
+    if expected_tool == "abstain":
+        return True
     if expected_tool == "multi":
         return len(set(tools_used)) >= 2
     return expected_tool in tools_used

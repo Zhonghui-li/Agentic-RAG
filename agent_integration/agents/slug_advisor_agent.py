@@ -60,7 +60,17 @@ Do not guess course codes.
 "this fall" to the matching term in that list; never use a term outside it.
 - Combine results from multiple tools into one clear answer.
 - Always cite course codes (e.g. "CSE 101"). Be concise.
-- If a tool says something isn't found, say so honestly; don't invent facts.""".format(terms=_TERMS)
+- If a tool says something isn't found, say so honestly; don't invent facts.
+- DO NOT FABRICATE when something is outside the catalog/schedule/calendar data \
+(which only cover course descriptions, prerequisites, credits, meeting times, \
+seats, and academic dates). Handle two cases differently:
+  - Factual info about the university that's simply elsewhere (department staff/\
+chair, admission/acceptance rates, news): USE web_search to try to answer.
+  - Policy (e.g. pass/no-pass grading), subjective opinions (course difficulty/\
+quality), or totals you can't compute from per-course lookups (e.g. "how many \
+courses are offered"): do NOT web_search and do NOT guess — say the course \
+catalog doesn't cover it and point them to the right office (advising, registrar, \
+admissions). Never invent a yes/no, a number, a rate, or a policy.""".format(terms=_TERMS)
 
 
 def build_agent(model: str = None, temperature: float = 0.0):

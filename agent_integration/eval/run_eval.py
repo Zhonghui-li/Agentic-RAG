@@ -85,12 +85,13 @@ def main():
             gs = it.get("gold_source") or []
             c_ok = context_recall_hit(sc_out, gs) if (gs and "search_catalog" in tools) else None
             rows.append({"id": it["id"], "category": it["category"], "bucket": bucket_of(it["category"]),
-                         "question": it["question"], "ans": a_ok, "tool": t_ok, "ctx": c_ok,
+                         "expected": it["expected_tool"], "question": it["question"],
+                         "ans": a_ok, "tool": t_ok, "ctx": c_ok,
                          "missing": missing, "tools": tools, "answer": answer, "contexts": all_ctx})
         except Exception as e:
             rows.append({"id": it["id"], "category": it["category"], "bucket": bucket_of(it["category"]),
-                         "question": it["question"], "ans": False, "tool": False, "ctx": None,
-                         "_err": f"{type(e).__name__}: {e}"})
+                         "expected": it["expected_tool"], "question": it["question"],
+                         "ans": False, "tool": False, "ctx": None, "_err": f"{type(e).__name__}: {e}"})
         r = rows[-1]
         failed = (r.get("ans") is False) or (r.get("tool") is False)
         print(f"[{i+1}/{len(items)}] {r['id']} ans={r['ans']} tool={r['tool']} ctx={r['ctx']}"
@@ -99,7 +100,10 @@ def main():
     # --- optional LLM-judged quality (Ragas faithfulness + relevancy) ---
     if args.quality:
         from eval.quality import score_quality
-        idx = [j for j, r in enumerate(rows) if r.get("answer") and r.get("contexts")]
+        # skip abstain items: an honest "not in catalog" refusal has no grounding,
+        # so faithfulness would mismeasure it (no-grounding != hallucination).
+        idx = [j for j, r in enumerate(rows)
+               if r.get("answer") and r.get("contexts") and r.get("expected") != "abstain"]
         q_items = [{"question": rows[j]["question"], "answer": rows[j]["answer"],
                     "contexts": rows[j]["contexts"]} for j in idx]
         print(f"\nScoring quality (Ragas) on {len(q_items)} items...")
