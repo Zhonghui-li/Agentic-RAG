@@ -66,6 +66,8 @@ def main():
     ap.add_argument("--out", default="eval/results.json")
     ap.add_argument("--baseline", default="eval/baseline.json")
     ap.add_argument("--quality", action="store_true", help="also compute Ragas faithfulness/relevancy")
+    ap.add_argument("--update-baseline", action="store_true",
+                    help="overwrite baseline.json with this run (deliberate; otherwise baseline stays fixed)")
     args = ap.parse_args()
 
     items = [json.loads(l) for l in open(args.eval)]
@@ -126,7 +128,9 @@ def main():
 
     json.dump({"metrics": metrics, "by_bucket": by_bucket, "rows": rows},
               open(args.out, "w"), indent=2, ensure_ascii=False)
-    json.dump(metrics, open(args.baseline, "w"), indent=2)
+    if args.update_baseline:
+        json.dump(metrics, open(args.baseline, "w"), indent=2)
+        print(f"(baseline.json updated)")
 
     print(f"\n=== METRICS ({elapsed}s) ===")
     for k, v in metrics.items():

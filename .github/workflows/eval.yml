@@ -1,0 +1,66 @@
+name: Slug Advisor Eval
+
+# Two-layer eval gate:
+#   L1 (this PR / push)  -> deterministic unit tests, no LLM, no secrets, must be 100%.
+#   L2 (nightly / manual) -> full agent eval + Ragas, gated against eval/baseline.json.
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 8 * * *"   # nightly 08:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # L1 — deterministic gate (runs on every push/PR; fast, free, must pass 100%)
+  # ---------------------------------------------------------------------------
+  l1-deterministic:
+    name: L1 deterministic tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./agent_integration
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pytest
+        run: pip install pytest
+      - name: Run grader + tool unit tests (no LLM, no network)
+        run: python -m pytest tests/ -q
+
+  # ---------------------------------------------------------------------------
+  # L2 — full-agent eval regression gate (nightly / manual; needs OPENAI_API_KEY)
+  # ---------------------------------------------------------------------------
+  l2-agent-eval:
+    name: L2 agent eval vs baseline
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./agent_integration
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      EMB_MODEL: text-embedding-3-small
+      GEN_LLM_MODEL: gpt-4o-mini
+      RAGAS_JUDGE_MODEL: gpt-4o-mini
+      HF_HUB_DISABLE_PROGRESS_BARS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install eval dependencies
+        run: pip install -r eval/requirements-eval.txt
+      - name: Build vectorstore (gitignored; rebuilt from committed course JSON)
+        run: >-
+          python scripts/build_ucsc_vectorstore.py
+          --courses data-ucsc/cse_courses.json
+          --out vectorstore-ucsc/ucsc_cse_faiss
+      - name: Run full agent eval (+ Ragas quality)
+        run: python -m eval.run_eval --quality
+      - name: Regression gate vs baseline
+        run: python -m eval.check_baseline

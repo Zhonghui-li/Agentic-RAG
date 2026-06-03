@@ -1,0 +1,14 @@
+# Dependencies for the L2 (full-agent) evaluation job. L1 (tests/) needs only pytest.
+langchain-openai==0.3.17
+langchain-community==0.3.24
+langgraph==0.4.5
+faiss-cpu==1.7.4
+sentence-transformers==5.2.2
+rank-bm25==0.2.2
+rapidfuzz==3.14.5
+ragas==0.2.15
+ddgs==9.14.4
+beautifulsoup4==4.14.3
+openai==1.75.0
+python-dotenv
+pytest
