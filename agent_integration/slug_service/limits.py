@@ -6,12 +6,12 @@ Three layers, all tunable via env vars:
   - RATE_LIMIT_PER_MIN : per-IP requests/minute (one bot can't dominate)
   - DAILY_QUOTA        : hard ceiling on requests/day -> bounds daily $ cost
 
-Counters are in-memory (per Cloud Run instance). With --max-instances=2 the
-effective caps are ~2x; that's an accepted tradeoff for a demo. A truly global
-quota would need a shared store (Redis/Firestore).
+Counters are in-memory (per Cloud Run instance). Deploy with --max-instances=1
+so the in-memory quota is an EXACT global cap (and it's cheaper too).
 
-Worst-case cost (gpt-4o-mini ~$0.005/query): DAILY_QUOTA=200 x 2 instances
-~= $2/day ~= $60/month, regardless of the lab key's high limit.
+Worst-case cost (gpt-4o-mini ~$0.005/query): DAILY_QUOTA=150 with
+--max-instances=1 ~= $0.75/day ~= $22/month, regardless of the lab key's
+high limit. (Realistic per-query cost is lower, ~$0.001-0.002.)
 """
 import os
 import time
@@ -21,7 +21,7 @@ from datetime import date
 
 MAX_INPUT_CHARS = int(os.environ.get("MAX_INPUT_CHARS", "500"))
 RATE_LIMIT_PER_MIN = int(os.environ.get("RATE_LIMIT_PER_MIN", "6"))
-DAILY_QUOTA = int(os.environ.get("DAILY_QUOTA", "200"))
+DAILY_QUOTA = int(os.environ.get("DAILY_QUOTA", "150"))
 
 _lock = threading.Lock()
 _hits = defaultdict(deque)            # ip -> recent request timestamps

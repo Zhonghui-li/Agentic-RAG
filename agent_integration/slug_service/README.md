@@ -38,13 +38,17 @@ public can trigger (don't rely on the OpenAI dashboard limit). All tunable via e
 |---|---|---|
 | `MAX_INPUT_CHARS` | 500 | reject over-long questions (token-inflation abuse) -> 400 |
 | `RATE_LIMIT_PER_MIN` | 6 | per-IP requests/minute -> 429 |
-| `DAILY_QUOTA` | 200 | hard ceiling on requests/day -> 429 ("try tomorrow") |
+| `DAILY_QUOTA` | 150 | hard ceiling on requests/day -> 429 ("try tomorrow") |
 
-Worst-case cost (gpt-4o-mini ~$0.005/query): `DAILY_QUOTA=200` × `--max-instances=2`
-≈ $2/day ≈ **$60/month cap**, regardless of the lab key's high limit. Counters are
-in-memory per instance (with max-instances=2 the effective caps are ~2x).
+Worst-case cost (gpt-4o-mini ~$0.005/query): `DAILY_QUOTA=150` with
+`--max-instances=1` ≈ $0.75/day ≈ **$22/month cap**, regardless of the lab key's
+high limit. Deploy with **max-instances=1** so the in-memory quota is an exact
+global cap (and it's cheaper). Realistic per-query cost is lower (~$0.001-0.002).
 
-**Deploy checklist:** `gcloud run deploy ... --max-instances=2`; set a GCP billing
+The agent also stays in scope (declines off-topic requests like "write me a poem")
+so the demo can't be used as a free general-purpose LLM.
+
+**Deploy checklist:** `gcloud run deploy ... --max-instances=1`; set a GCP billing
 alert; optionally ask the lab for a project-scoped OpenAI key with its own low cap.
 
 ## Notes
