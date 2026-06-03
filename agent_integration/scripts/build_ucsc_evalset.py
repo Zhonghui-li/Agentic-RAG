@@ -248,10 +248,14 @@ DIVERSE = [
     {"question": "Can I take CSE 3 on a pass/no-pass (P/NP) basis?",
      "category": "policy", "expected_tool": "abstain",
      "answer_facts": HONESTY, "gold_source": []},
-    # aggregation -> abstain (no tool can count; admit instead of fabricating a total)
+    # aggregation -> dual-track: GATE on honest abstain (current correct behavior,
+    # no counting tool), but keep ideal_facts=["96"] as a non-gating DIAGNOSTIC so
+    # the capability gap stays visible. When a counting tool is added, capability
+    # coverage rises and ideal_facts can be promoted to answer_facts.
     {"question": "How many CSE courses are offered in Fall 2025?",
      "category": "aggregation", "expected_tool": "abstain",
-     "answer_facts": HONESTY, "gold_source": []},
+     "answer_facts": HONESTY, "ideal_facts": ["96"],
+     "capability_gap": "no aggregation/counting tool", "gold_source": []},
     # subjective -> abstain (catalog has no difficulty ratings; admit + redirect)
     {"question": "Do students consider CSE 142 a difficult course?",
      "category": "subjective", "expected_tool": "abstain",

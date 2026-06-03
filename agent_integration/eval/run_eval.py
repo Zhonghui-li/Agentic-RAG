@@ -84,9 +84,13 @@ def main():
             t_ok = tool_selection_ok(tools, it["expected_tool"])
             gs = it.get("gold_source") or []
             c_ok = context_recall_hit(sc_out, gs) if (gs and "search_catalog" in tools) else None
+            # non-gating diagnostic: does the answer meet the ASPIRATIONAL target?
+            # (used for capability gaps the agent can't yet hit, e.g. counting)
+            ideal = it.get("ideal_facts")
+            ideal_met = (not answer_correct(answer, ideal)) if ideal else None
             rows.append({"id": it["id"], "category": it["category"], "bucket": bucket_of(it["category"]),
                          "expected": it["expected_tool"], "question": it["question"],
-                         "ans": a_ok, "tool": t_ok, "ctx": c_ok,
+                         "ans": a_ok, "tool": t_ok, "ctx": c_ok, "ideal_met": ideal_met,
                          "missing": missing, "tools": tools, "answer": answer, "contexts": all_ctx})
         except Exception as e:
             rows.append({"id": it["id"], "category": it["category"], "bucket": bucket_of(it["category"]),
@@ -116,6 +120,9 @@ def main():
         "answer_correctness": pct([r.get("ans") for r in rows]),
         "tool_selection_accuracy": pct([r.get("tool") for r in rows]),
         "context_recall": pct([r.get("ctx") for r in rows]),
+        # aspirational coverage (NOT gated): % of capability-gap items the agent
+        # can already hit. Rises as we add capabilities (e.g. a counting tool).
+        "capability_coverage": pct([r.get("ideal_met") for r in rows]),
         "n": len(rows), "elapsed_s": elapsed,
     }
     if args.quality:
