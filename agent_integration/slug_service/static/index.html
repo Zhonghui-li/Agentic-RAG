@@ -76,6 +76,11 @@ form.addEventListener('submit', async (e) => {
       body: JSON.stringify({question})
     });
     const data = await r.json();
+    if (!r.ok) {
+      pending.querySelector('.bubble').innerHTML =
+        '<span class="hint">' + esc(data.detail || 'Something went wrong. Please try again.') + '</span>';
+      send.disabled = false; input.focus(); return;
+    }
     let html = esc(data.answer || '(no answer)');
     if (data.trace && data.trace.length) {
       const n = data.trace.length;

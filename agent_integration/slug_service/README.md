@@ -29,6 +29,24 @@ Then open http://localhost:8100
 - `POST /advisor` — body `{"question": "..."}` →
   `{"answer": "...", "trace": [{"tool","args"}], "tools_used": [...]}`
 
+## Abuse / cost controls (for public deploy)
+
+OpenAI + GCP here are shared lab accounts, so the app caps how many LLM calls the
+public can trigger (don't rely on the OpenAI dashboard limit). All tunable via env:
+
+| Env var | Default | What it does |
+|---|---|---|
+| `MAX_INPUT_CHARS` | 500 | reject over-long questions (token-inflation abuse) -> 400 |
+| `RATE_LIMIT_PER_MIN` | 6 | per-IP requests/minute -> 429 |
+| `DAILY_QUOTA` | 200 | hard ceiling on requests/day -> 429 ("try tomorrow") |
+
+Worst-case cost (gpt-4o-mini ~$0.005/query): `DAILY_QUOTA=200` × `--max-instances=2`
+≈ $2/day ≈ **$60/month cap**, regardless of the lab key's high limit. Counters are
+in-memory per instance (with max-instances=2 the effective caps are ~2x).
+
+**Deploy checklist:** `gcloud run deploy ... --max-instances=2`; set a GCP billing
+alert; optionally ask the lab for a project-scoped OpenAI key with its own low cap.
+
 ## Notes
 
 - The endpoint is a sync `def`, so FastAPI runs it in a threadpool — the
