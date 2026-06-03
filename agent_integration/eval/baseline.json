@@ -1,7 +1,9 @@
 {
-  "answer_correctness": 98.5,
+  "answer_correctness": 98.4,
   "tool_selection_accuracy": 98.6,
   "context_recall": 100.0,
-  "n": 72,
-  "elapsed_s": 324.7
+  "n": 69,
+  "elapsed_s": 345.9,
+  "faithfulness": 0.936,
+  "answer_relevancy": 0.818
 }

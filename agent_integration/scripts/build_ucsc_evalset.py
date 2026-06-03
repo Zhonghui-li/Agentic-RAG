@@ -195,19 +195,12 @@ HARD = [
 # then HUMAN-VERIFIED against cse_courses.json and converted to answer_facts.
 # (Of 12 raw generations, these 4 were kept; the rest were dropped for typo-injection
 # or referencing deprecated course names like "CMPS 10".)
+# Kept 1 of the 4 generated as a representative (the others were the same
+# "prereqs of X, relate to Y" pattern -> redundant once DIVERSE filled coverage).
 RAGAS_CURATED = [
-    {"question": "What are the prerequisites for enrolling in CSE 117 Open Source Programming, and how do they relate to CSE 111?",
-     "category": "multi_hop", "expected_tool": "search_catalog",
-     "answer_facts": ["CSE 101"], "gold_source": ["CSE 117"]},
     {"question": "What are the prerequisites for CSE 30, and how do they compare to the prerequisites for CSE 122?",
      "category": "multi_hop", "expected_tool": "search_catalog",
      "answer_facts": ["CSE 20", "CSE 100"], "gold_source": ["CSE 30", "CSE 122"]},
-    {"question": "What are the prerequisites for CSE 105 Modern Algorithmic Toolbox, and how do they relate to CSE 102?",
-     "category": "multi_hop", "expected_tool": "search_catalog",
-     "answer_facts": ["CSE 102"], "gold_source": ["CSE 105"]},
-    {"question": "What are the prerequisites for CSE 115D and how do they relate to CSE 115B?",
-     "category": "multi_hop", "expected_tool": "search_catalog",
-     "answer_facts": ["CSE 115A"], "gold_source": ["CSE 115D", "CSE 115B"]},
 ]
 
 # Coverage-matrix questions: deliberately fill empty cells (advising / eligibility /
