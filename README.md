@@ -1,229 +1,124 @@
-# Agentic RAG
+# 🍌 UCSC Slug Advisor — a tool-calling agent for course advising
 
-A full-stack chat application with an integrated agentic RAG (Retrieval-Augmented Generation) pipeline, evaluated on [HotpotQA](https://hotpotqa.github.io/) multi-hop question answering. semF1 improved from **0.416 → 0.755 (+81.5%)** through systematic retrieval, generation, and routing optimization.
+A production-style **tool-calling agent** that answers UC Santa Cruz CSE students'
+questions about courses, prerequisites, schedules, and academic dates — over
+**real scraped catalog data**, with a layered **eval-in-CI** harness and a live demo.
 
-## Full-Stack Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                      Frontend                            │
-│              (Next.js - Port 3000)                       │
-│   Model Selection: [OpenAI] [Claude] [Gemini] [RAG Agent]│
-└──────────────────────────┬──────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│                   Main Backend                           │
-│               (Flask - Port 5001)                        │
-│  /get_response                                           │
-│    ├─ provider=openai  → OpenAI API                     │
-│    ├─ provider=claude  → Anthropic API                  │
-│    ├─ provider=gemini  → Google API                     │
-│    └─ method=rag-agent → RAG Service                    │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│                    RAG Service                           │
-│               (FastAPI - Port 8001)                      │
-│  Agentic RAG Pipeline:                                   │
-│  - ReasoningAgent (Query Optimization)                   │
-│  - RetrievalAgent (FAISS + BM25 hybrid retrieval)       │
-│  - GenerationAgent (CoT Answer Generation)               │
-│  - EvaluationAgent (Quality Assessment)                  │
-│  - V2 Oracle RL Router (IRCoT vs PAR2 routing)          │
-└─────────────────────────────────────────────────────────┘
-```
-
-## RAG Pipeline Architecture
+### ▶︎ Live demo: **https://slug-advisor-759005971862.us-central1.run.app**
 
 ```
-                         User Query
-                             │
-                             ▼
-                   ┌───────────────────┐
-                   │  ReasoningAgent   │  Query optimization + Multi-query expansion
-                   └────────┬──────────┘
-                            │  3 query variants
-                            ▼
-                   ┌───────────────────┐
-                   │  RetrievalAgent   │  Hybrid retrieval (BM25 + FAISS + RRF)
-                   │                   │  → CrossEncoder reranking
-                   └────────┬──────────┘
-                            │  top-k documents
-                            ▼
-                   ┌───────────────────┐
-                   │  IRCoT Loop       │  Iterative Retrieval Chain-of-Thought
-                   │  (up to 4 hops)   │  reason → retrieve more → reason → ...
-                   └────────┬──────────┘
-                            │  accumulated context
-                            ▼
-                   ┌───────────────────┐
-                   │  GenerationAgent  │  CoT Reasoning → Answer extraction
-                   └────────┬──────────┘
-                            │
-                            ▼
-                   ┌───────────────────┐
-                   │  EvaluationAgent  │  Faithfulness / Relevancy / Semantic F1
-                   └────────┬──────────┘
-                            │  ctxP, ctxR, doc_count
-                            ▼
-                   ┌───────────────────┐
-                   │  V2 Oracle RL     │  MLP trained on 500-question counterfactual
-                   │  Retrieval Router │  experiments: IRCoT OK or PAR2 fallback?
-                   └────────┬──────────┘
-                    ircot_ok │           │ par2_needed
-                             ▼           ▼
-                        Generator   Anchor-Based Two-Stage Retrieval
-                                    (5 sub-queries → ESC-gated refinement)
-                                         │
-                                         ▼
-                                     Generator
-                            │
-                            ▼
-                      Final Answer
+Q: What's the prerequisite for the machine learning course, and is it offered this fall?
+
+A: The machine learning course is CSE 142. Its prerequisites are CSE 40 or STAT 132;
+   CSE 101 or CSE 101P; AM 30/MATH 22/MATH 23A; and STAT 131 or CSE 107.
+   It is offered in Fall 2025 — MWF 4:00–5:05 PM, Physical Sciences 110 (open, 69 seats left).
+
+   🔧 search_catalog({"query": "machine learning"})
+   🔧 lookup_schedule({"course_code": "CSE 142", "term": "Fall 2025"})
 ```
 
-### Key Components
+The agent **decides which tools to call** and chains them (find the course, then
+look up its schedule) — the tool-call trace is shown in the UI.
 
-| Component | File | Description |
-|-----------|------|-------------|
-| ReasoningAgent | `reasoning_agent.py` | Query optimization, pronoun resolution via conversation context, multi-query expansion |
-| RetrievalAgent | `retrieval_agent.py` | FAISS dense retrieval + BM25 sparse retrieval, RRF fusion |
-| HybridRetriever | `hybrid_retriever.py` | BM25 + FAISS reciprocal rank fusion |
-| CrossEncoder Reranker | `reranker.py` | `cross-encoder/ms-marco-MiniLM-L-6-v2` reranking |
-| Multi-Query | `multi_query.py` | LLM-based query variant generation + sub-query decomposition |
-| GenerationAgent | `generation_agent.py` | CoT prompt + few-shot examples + answer parsing |
-| EvaluationAgent | `evaluation_agent.py` | Ragas-based faithfulness, relevancy, noise sensitivity |
-| ESC | `esc.py` | Evidence Sufficiency Controller for anchor-based two-stage retrieval |
-| Offline RL Router | `offline_rl_router.py` | V2 Oracle RL router trained on counterfactual experiments |
-| LangGraph Orchestrator | `langgraph_rag.py` | State-machine orchestration of all agents |
-| Semantic Cache | `rag_service/main.py` | Redis embedding-based cache; bypassed for pronoun/context-dependent queries |
-| Guardrails | `rag_service/main.py` | Out-of-scope question filtering before pipeline execution |
+---
 
-## Quick Start
+## Architecture
 
-### Prerequisites
+```
+        user question
+             │
+   LangGraph ReAct agent (gpt-4o-mini)      ← plans, calls tools, composes the answer
+             │
+   ┌─────────┼───────────────┬───────────────────┐
+   ▼         ▼               ▼                   ▼
+search_catalog  lookup_schedule  get_academic_calendar  web_search
+(hybrid RAG)    (structured)     (structured + dates)   (fallback)
+   │
+ BM25 + FAISS (RRF fusion) → CrossEncoder reranker → top course passages
+```
 
-- Python 3.11
-- OpenAI API key (required for embeddings + generation)
-- FAISS vector index (see [RAG Pipeline Onboarding](./docs/rag-pipeline-onboarding.md))
+**Design principle — RAG vs tools:** unstructured text (course descriptions,
+prerequisites) goes through `search_catalog` (retrieval); structured / dynamic /
+computational data (offerings, dates) goes through dedicated tools. Mixing them is
+the most common agent-design mistake.
 
-### Run the Full Application Locally
+## Highlights
 
-See **[`docs/fullstack-local-dev.md`](./docs/fullstack-local-dev.md)** for step-by-step instructions to start all three services (RAG service, Flask backend, Next.js frontend).
+- **Tool-calling ReAct agent** (LangGraph) with a recursion cap and graceful overflow.
+- **Hybrid retrieval** — BM25 + FAISS with RRF fusion, then a CrossEncoder reranker
+  (course codes like `CSE 101` need exact matching that dense vectors blur).
+- **Guardrails** — anti-hallucination (escalate to web search or honestly say "not in
+  the catalog" instead of fabricating) and a **capability-bound scope** rule (scope =
+  what the tools can answer, so adding data = adding tools, not editing prompts).
+- **Eval-in-CI** — a 5-metric suite (see below) gated in GitHub Actions.
+- **Data-driven restraint** — the project's earlier RL router and IRCoT were
+  *deliberately not used* here: the eval showed retrieval never fails on this domain,
+  so they'd have nothing to fix. Knowing when **not** to add complexity.
+- **Deployed** to Cloud Run with cost/abuse controls (per-IP rate limit, daily quota
+  ~ $22/month cap, input-length cap, `max-instances=1`).
 
-### RAG Pipeline Only (no frontend)
+## Evaluation (the part most personal projects skip)
 
-See **[`docs/rag-pipeline-onboarding.md`](./docs/rag-pipeline-onboarding.md)** for pipeline setup, vector store build, and terminal smoke test.
+A 69-question eval set, **self-grounded** in the real data (answers derived from the
+scraped catalog, so they're correct by construction), scored on a **complementary
+metric suite** — each metric catches failures the others miss:
 
-### Docker (all services)
+| metric | type | catches |
+|---|---|---|
+| answer correctness | deterministic | wrong/missing facts |
+| tool-selection accuracy | deterministic | wrong tool / failure to escalate |
+| context recall | deterministic | retrieval missed the right course |
+| **faithfulness** (Ragas) | LLM-judged | ungrounded fabrication |
+| **answer relevancy** (Ragas) | LLM-judged | off-topic / evasive answers |
+
+Two-layer CI (`.github/workflows/eval.yml`): **L1** deterministic unit tests on every
+PR (no LLM, must pass 100%); **L2** the full agent + Ragas eval nightly, gated against
+a committed baseline with per-metric drift tolerance. Capability gaps (e.g. counting,
+which no tool covers yet) are tracked as non-gating `xfail`-style diagnostics.
+
+Current baseline (69 q): answer 100 / tool-selection 100 / context-recall 100 /
+faithfulness 0.93 / answer-relevancy 0.82.
+
+## Repo layout (`agent_integration/`)
+
+```
+agents/slug_advisor_agent.py   ReAct orchestrator + system prompt / guardrails
+agents/slug_tools.py           lookup_schedule, get_academic_calendar, web_search
+agents/slug_retrieval.py       search_catalog (hybrid retrieval + reranker)
+agents/{hybrid_retriever,reranker}.py   reused retrieval engineering
+scripts/                       scrape catalog → build data / vectorstore / eval set
+data-ucsc/                     226 real CSE courses + calendar + schedule + 69-q eval
+eval/                          graders, run_eval, Ragas quality, baseline gate
+tests/                         L1 deterministic tests
+slug_service/                  FastAPI demo + chat UI + Dockerfile / Cloud Build deploy
+```
+
+## Run locally
 
 ```bash
-cp .env.example .env
-# Add your OPENAI_API_KEY to .env
-docker-compose up
+cd agent_integration
+export OPENAI_API_KEY=sk-...  EMB_MODEL=text-embedding-3-small  GEN_LLM_MODEL=gpt-4o-mini
+
+# build the vectorstore once (FAISS index over the scraped catalog)
+python scripts/build_ucsc_vectorstore.py --courses data-ucsc/cse_courses.json \
+    --out vectorstore-ucsc/ucsc_cse_faiss
+
+python -m agents.slug_advisor_agent "What are the prerequisites for CSE 142?"   # CLI
+uvicorn slug_service.app:app --port 8100   # web demo → http://localhost:8100
+
+python -m pytest tests/             # L1 deterministic tests
+python -m eval.run_eval --quality   # full eval + Ragas (needs API key)
 ```
 
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
-- **RAG Service**: http://localhost:8001
+## Deploy
 
-### Local Development
+`slug_service/deploy.sh` builds on Cloud Build (native amd64) and deploys to Cloud Run
+with the cost/abuse caps. See `slug_service/README.md` for the env knobs and the
+fresh-container dependency-pinning gotchas (langgraph sub-packages; `numpy<2` for faiss).
 
-```bash
-# Backend (Flask)
-cd webapp/backend
-pip install -r requirements.txt
-python app.py
+---
 
-# Frontend (Next.js)
-cd webapp/frontend
-pnpm install
-pnpm dev
-
-# RAG Service (FastAPI)
-cd rag_service
-pip install -r requirements.txt
-python main.py
-```
-
-## Available Models
-
-### LLM Providers
-- **OpenAI**: GPT-4o-mini, GPT-4o, GPT-3.5-turbo
-- **Claude**: Claude 3 Opus, Sonnet, Haiku
-- **Gemini**: Gemini 1.5 Pro, Flash
-
-### RAG Agent
-Multi-step agentic pipeline with:
-- **Hybrid retrieval**: BM25 + FAISS + RRF fusion, CrossEncoder reranking
-- **IRCoT reasoning**: iterative retrieval up to 4 hops
-- **V2 Oracle RL routing**: MLP router switching between IRCoT and PAR2 fallback
-- **Short-term memory**: conversation context passed across turns for pronoun resolution
-- **Semantic cache**: Redis embedding-based cache for repeated queries
-- **Guardrails**: out-of-scope filtering before pipeline runs
-- **Streaming**: SSE token-by-token response with source citations
-
-**Works best on HotpotQA-style multi-hop questions** — the vector store is built from the HotpotQA Wikipedia corpus.
-
-## Project Structure
-
-```
-agent_rl/
-├── agent_integration/              # Core RAG pipeline
-│   ├── agents/
-│   │   ├── langgraph_rag.py        # LangGraph state-machine orchestrator
-│   │   ├── reasoning_agent.py      # Query optimization + IRCoT loop
-│   │   ├── retrieval_agent.py      # FAISS/BM25 retrieval
-│   │   ├── hybrid_retriever.py     # BM25 + FAISS + RRF fusion
-│   │   ├── reranker.py             # CrossEncoder reranking
-│   │   ├── multi_query.py          # LLM query expansion
-│   │   ├── esc.py                  # Evidence Sufficiency Controller (PAR2 Stage 2)
-│   │   ├── generation_agent.py     # CoT generation + answer extraction
-│   │   ├── evaluation_agent.py     # Ragas-based quality metrics
-│   │   ├── offline_rl_router.py    # V2 Oracle RL router
-│   │   └── offline_rl_router_policy_v2.pt  # Pre-trained router weights
-│   ├── data-hotpot/                # HotpotQA evaluation dataset
-│   ├── scripts/                    # Vectorstore build scripts
-│   ├── utils/                      # Text processing, trajectory logging
-│   └── vectorstore-hotpot/         # FAISS indices (not in repo)
-│
-├── rag_service/                    # FastAPI RAG Service (production)
-├── webapp/
-│   ├── backend/                    # Flask Backend (multi-provider LLM)
-│   └── frontend/                   # Next.js Frontend
-│
-├── docs/
-│   ├── rag-pipeline-onboarding.md  # RAG pipeline setup guide
-│   ├── fullstack-local-dev.md      # Full-stack local development guide
-│   └── rag-service-schema.md       # API contract + hosting requirements
-├── docker-compose.yml
-└── .env.example
-```
-
-## API Endpoints
-
-### RAG Service (`localhost:8001`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/query` | POST | Query the RAG pipeline (synchronous) |
-| `/query/stream` | POST | Stream response via Server-Sent Events |
-| `/health` | GET | Health check (agents loaded, Redis connected) |
-| `/metrics` | GET | Prometheus metrics |
-
-For full request/response schema and all environment variables, see [`docs/rag-service-schema.md`](./docs/rag-service-schema.md).
-
-### Backend API (`localhost:5001`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/get_response` | POST | Send message, get LLM response |
-| `/new_conversation` | POST | Create new conversation |
-| `/conversation/<id>` | GET | Get conversation by ID |
-| `/login` | POST | User login |
-
-## License
-
-MIT License
+*Built on the retrieval engineering from this repo's earlier HotpotQA agentic-RAG
+pipeline (multi-hop QA, hybrid retrieval, RL routing) — reused inside `search_catalog`,
+re-pointed from a benchmark to a real, deployed, student-facing use case. The original
+full-stack pipeline README is preserved at [`docs/README-pipeline.md`](docs/README-pipeline.md).*
