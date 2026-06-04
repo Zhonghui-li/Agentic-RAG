@@ -19,3 +19,6 @@ rank-bm25==0.2.2
 sentence-transformers==5.2.2
 ddgs==9.14.4
 openai==1.75.0
+# LLM observability — traces (latency, token cost, tool usage) auto-activate in the
+# container because observability.py is key-gated on the LANGFUSE_* env vars.
+langfuse==4.7.1

@@ -51,6 +51,25 @@ so the demo can't be used as a free general-purpose LLM.
 **Deploy checklist:** `gcloud run deploy ... --max-instances=1`; set a GCP billing
 alert; optionally ask the lab for a project-scoped OpenAI key with its own low cap.
 
+## Observability (Langfuse)
+
+The agent is traced in Langfuse (latency, token cost, tools) when the `LANGFUSE_*`
+env vars are present — `agents/observability.py` is key-gated, so without them the
+service runs unchanged. `deploy.sh` injects the public key + host as env vars and
+reads the secret key from Secret Manager. Create that secret once (use a **rotated**
+key, not one you've shared):
+
+```bash
+echo -n 'sk-lf-...' | gcloud secrets create LANGFUSE_SECRET_KEY \
+    --project proslm --data-file=-
+# grant the Cloud Run runtime SA access if needed:
+gcloud secrets add-iam-policy-binding LANGFUSE_SECRET_KEY --project proslm \
+    --member="serviceAccount:$(gcloud projects describe proslm --format='value(projectNumber)')-compute@developer.gserviceaccount.com" \
+    --role=roles/secretmanager.secretAccessor
+```
+
+Then `bash slug_service/deploy.sh` redeploys with tracing on.
+
 ## Notes
 
 - The endpoint is a sync `def`, so FastAPI runs it in a threadpool — the
