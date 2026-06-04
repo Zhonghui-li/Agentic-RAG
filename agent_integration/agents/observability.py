@@ -15,6 +15,7 @@ from contextlib import contextmanager
 LANGFUSE_ENABLED = bool(
     os.environ.get("LANGFUSE_PUBLIC_KEY") and os.environ.get("LANGFUSE_SECRET_KEY")
 )
+_MODEL = os.environ.get("GEN_LLM_MODEL", "gpt-4o-mini")
 
 
 def sum_usage(messages):
@@ -50,11 +51,19 @@ def trace_agent(question):
     with lf.start_as_current_observation(name="slug-advisor", as_type="agent", input=question):
         def record(answer=None, tools_used=None, usage=None):
             try:
+                # a child "generation" carries model + token usage, so Langfuse
+                # computes $ cost (gpt-4o-mini pricing x tokens) on the trace
+                if usage:
+                    with lf.start_as_current_observation(
+                        name="llm-calls", as_type="generation",
+                        input=question, output=answer, model=_MODEL,
+                        usage_details={"input": usage["input"], "output": usage["output"]},
+                    ):
+                        pass
                 lf.update_current_span(
                     output=answer,
                     metadata={"tools_used": tools_used,
-                              "n_tool_calls": len(tools_used or []),
-                              "usage": usage},
+                              "n_tool_calls": len(tools_used or [])},
                 )
                 lf.set_current_trace_io(input=question, output=answer)
             except Exception as e:
