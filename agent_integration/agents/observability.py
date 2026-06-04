@@ -47,21 +47,17 @@ def trace_agent(question):
         yield _noop
         return
 
-    # span wraps the actual work -> its duration == real latency
-    with lf.start_as_current_observation(name="slug-advisor", as_type="agent", input=question):
+    # one "generation" observation wraps the run: its duration is the real
+    # latency, and model + usage_details let Langfuse compute $ cost — both on
+    # the same row (no separate child, so no apparent "duplication").
+    with lf.start_as_current_observation(name="slug-advisor", as_type="generation", input=question):
         def record(answer=None, tools_used=None, usage=None):
             try:
-                # a child "generation" carries model + token usage, so Langfuse
-                # computes $ cost (gpt-4o-mini pricing x tokens) on the trace
-                if usage:
-                    with lf.start_as_current_observation(
-                        name="llm-calls", as_type="generation",
-                        input=question, output=answer, model=_MODEL,
-                        usage_details={"input": usage["input"], "output": usage["output"]},
-                    ):
-                        pass
-                lf.update_current_span(
+                lf.update_current_generation(
                     output=answer,
+                    model=_MODEL,
+                    usage_details=({"input": usage["input"], "output": usage["output"]}
+                                   if usage else None),
                     metadata={"tools_used": tools_used,
                               "n_tool_calls": len(tools_used or [])},
                 )
