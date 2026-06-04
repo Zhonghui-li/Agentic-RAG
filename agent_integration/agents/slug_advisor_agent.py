@@ -12,7 +12,6 @@ the answer). Multi-hop prerequisite questions are handled by calling
 search_catalog repeatedly.
 """
 import os
-import time
 from typing import Dict, List
 
 from langchain_core.tools import tool
@@ -104,25 +103,23 @@ def run_advisor(question: str, agent=None, verbose: bool = False,
     """Run the agent on a question. Returns {answer, trace, tools_used}."""
     agent = agent or build_agent()
     usage = None
-    t0 = time.time()
-    try:
-        result = agent.invoke(
-            {"messages": [("user", question)]},
-            {"recursion_limit": recursion_limit},
-        )
-        messages = result["messages"]
-        answer = messages[-1].content
-        trace = _extract_trace(messages)
-        usage = observability.sum_usage(messages)
-    except GraphRecursionError:
-        answer = ("I wasn't able to resolve this within the step limit. "
-                  "Please try rephrasing or narrowing your question.")
-        trace = []
-    latency_s = round(time.time() - t0, 2)
-    tools_used = [t["tool"] for t in trace]
-
-    # optional Langfuse trace (no-op unless LANGFUSE_* keys are set)
-    observability.log_trace(question, answer, tools_used, latency_s, usage)
+    # the Langfuse span (if enabled) wraps the invoke so its duration is the real latency
+    with observability.trace_agent(question) as record:
+        try:
+            result = agent.invoke(
+                {"messages": [("user", question)]},
+                {"recursion_limit": recursion_limit},
+            )
+            messages = result["messages"]
+            answer = messages[-1].content
+            trace = _extract_trace(messages)
+            usage = observability.sum_usage(messages)
+        except GraphRecursionError:
+            answer = ("I wasn't able to resolve this within the step limit. "
+                      "Please try rephrasing or narrowing your question.")
+            trace = []
+        tools_used = [t["tool"] for t in trace]
+        record(answer=answer, tools_used=tools_used, usage=usage)
 
     if verbose:
         for step in trace:

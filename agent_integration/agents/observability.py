@@ -3,12 +3,14 @@
 Active only when LANGFUSE_PUBLIC_KEY + LANGFUSE_SECRET_KEY are set; otherwise a
 no-op, so the agent runs unchanged without an account.
 
-Each agent run is logged as one "agent" observation: question -> answer, plus
-tools used, latency, and token usage (for cost). A per-LLM-call breakdown would
-use Langfuse's LangChain callback handler, currently blocked by a
-langchain / langchain-core version skew, so we trace at the run level.
+`trace_agent(question)` is a context manager that WRAPS the agent run, so the
+span's duration is the real latency. Inside, call the yielded `record(...)` to
+attach the answer / tools / token usage. A per-LLM-call breakdown would use
+Langfuse's LangChain callback handler, currently blocked by a langchain /
+langchain-core version skew, so we trace at the run level.
 """
 import os
+from contextlib import contextmanager
 
 LANGFUSE_ENABLED = bool(
     os.environ.get("LANGFUSE_PUBLIC_KEY") and os.environ.get("LANGFUSE_SECRET_KEY")
@@ -25,26 +27,40 @@ def sum_usage(messages):
     return {"input": inp, "output": out} if (inp or out) else None
 
 
-def log_trace(question, answer, tools_used, latency_s, usage=None):
-    """Record one agent run to Langfuse. No-op unless keys are configured."""
+def _noop(**_):
+    pass
+
+
+@contextmanager
+def trace_agent(question):
+    """Wrap an agent run in a Langfuse span (no-op unless keys set). Yields a
+    `record(answer, tools_used, usage)` callback to set the span output."""
     if not LANGFUSE_ENABLED:
+        yield _noop
         return
     try:
         from langfuse import get_client
         lf = get_client()
-        with lf.start_as_current_observation(
-            name="slug-advisor",
-            as_type="agent",
-            input=question,
-            output=answer,
-            metadata={
-                "tools_used": tools_used,
-                "n_tool_calls": len(tools_used or []),
-                "latency_s": latency_s,
-                "usage": usage,
-            },
-        ):
-            lf.set_current_trace_io(input=question, output=answer)
+    except Exception as e:  # never break the agent
+        print(f"[langfuse] disabled ({type(e).__name__}: {e})")
+        yield _noop
+        return
+
+    # span wraps the actual work -> its duration == real latency
+    with lf.start_as_current_observation(name="slug-advisor", as_type="agent", input=question):
+        def record(answer=None, tools_used=None, usage=None):
+            try:
+                lf.update_current_span(
+                    output=answer,
+                    metadata={"tools_used": tools_used,
+                              "n_tool_calls": len(tools_used or []),
+                              "usage": usage},
+                )
+                lf.set_current_trace_io(input=question, output=answer)
+            except Exception as e:
+                print(f"[langfuse] record skipped: {e}")
+        yield record
+    try:
         lf.flush()
-    except Exception as e:  # tracing must never break the agent
-        print(f"[langfuse] trace skipped: {type(e).__name__}: {e}")
+    except Exception:
+        pass
