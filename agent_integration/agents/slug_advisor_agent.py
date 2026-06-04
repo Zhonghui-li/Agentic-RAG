@@ -15,6 +15,7 @@ import os
 from typing import Dict, List
 
 from langchain_core.tools import tool
+from langchain_core.messages import ToolMessage
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langgraph.errors import GraphRecursionError
@@ -102,7 +103,7 @@ def run_advisor(question: str, agent=None, verbose: bool = False,
                 recursion_limit: int = DEFAULT_RECURSION_LIMIT) -> Dict:
     """Run the agent on a question. Returns {answer, trace, tools_used}."""
     agent = agent or build_agent()
-    usage = None
+    usage, contexts = None, []
     # the Langfuse span (if enabled) wraps the invoke so its duration is the real latency
     with observability.trace_agent(question) as record:
         try:
@@ -114,12 +115,15 @@ def run_advisor(question: str, agent=None, verbose: bool = False,
             answer = messages[-1].content
             trace = _extract_trace(messages)
             usage = observability.sum_usage(messages)
+            # tool outputs = the grounding, stored for offline faithfulness scoring
+            contexts = [m.content[:1500] for m in messages
+                        if isinstance(m, ToolMessage)][:6]
         except GraphRecursionError:
             answer = ("I wasn't able to resolve this within the step limit. "
                       "Please try rephrasing or narrowing your question.")
             trace = []
         tools_used = [t["tool"] for t in trace]
-        record(answer=answer, tools_used=tools_used, usage=usage)
+        record(answer=answer, tools_used=tools_used, usage=usage, contexts=contexts)
 
     if verbose:
         for step in trace:

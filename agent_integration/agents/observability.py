@@ -51,15 +51,18 @@ def trace_agent(question):
     # latency, and model + usage_details let Langfuse compute $ cost — both on
     # the same row (no separate child, so no apparent "duplication").
     with lf.start_as_current_observation(name="slug-advisor", as_type="generation", input=question):
-        def record(answer=None, tools_used=None, usage=None):
+        def record(answer=None, tools_used=None, usage=None, contexts=None):
             try:
                 lf.update_current_generation(
                     output=answer,
                     model=_MODEL,
                     usage_details=({"input": usage["input"], "output": usage["output"]}
                                    if usage else None),
+                    # contexts stored so the offline scorer (eval/score_traces.py)
+                    # can grade faithfulness against what the tools returned
                     metadata={"tools_used": tools_used,
-                              "n_tool_calls": len(tools_used or [])},
+                              "n_tool_calls": len(tools_used or []),
+                              "contexts": contexts},
                 )
                 lf.set_current_trace_io(input=question, output=answer)
             except Exception as e:
