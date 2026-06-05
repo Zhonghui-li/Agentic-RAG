@@ -56,7 +56,7 @@ def pct(xs):
 
 
 def mean(xs):
-    xs = [x for x in xs if x is not None]
+    xs = [x for x in xs if x is not None and x == x]  # drop None and NaN
     return round(sum(xs) / len(xs), 3) if xs else None
 
 

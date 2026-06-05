@@ -37,9 +37,15 @@ def _get_vectorstore():
     global _vectorstore
     if _vectorstore is None:
         emb = OpenAIEmbeddings(model=_EMB_MODEL)
-        _vectorstore = FAISS.load_local(
-            _VS_PATH, emb, allow_dangerous_deserialization=True
-        )
+        if os.environ.get("DATABASE_URL"):
+            # pgvector (Postgres) — catalog decoupled from the image
+            from agents.pg_vectorstore import PgVectorStore
+            _vectorstore = PgVectorStore(emb)
+        else:
+            # FAISS file (local dev / backward compatible)
+            _vectorstore = FAISS.load_local(
+                _VS_PATH, emb, allow_dangerous_deserialization=True
+            )
     return _vectorstore
 
 

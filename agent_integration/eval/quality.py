@@ -15,6 +15,7 @@ from ragas.dataset_schema import SingleTurnSample
 from ragas.metrics import Faithfulness, ResponseRelevancy
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
+from ragas.run_config import RunConfig
 
 # Pin the judge (override in CI to a dated snapshot for full reproducibility).
 JUDGE_MODEL = os.environ.get("RAGAS_JUDGE_MODEL", "gpt-4o-mini")
@@ -40,6 +41,9 @@ def score_quality(items):
         EvaluationDataset(samples=samples),
         metrics=[Faithfulness(llm=judge), ResponseRelevancy(llm=judge, embeddings=emb)],
         show_progress=False,
+        # default concurrency (16) overwhelms the judge API -> TimeoutError -> NaN
+        # scores; throttle workers and raise the timeout for reliable scoring.
+        run_config=RunConfig(timeout=180, max_workers=4),
     )
     df = result.to_pandas()
 
@@ -51,9 +55,10 @@ def score_quality(items):
         def num(col):
             v = r.get(col) if col else None
             try:
-                return round(float(v), 3)
+                f = float(v)
             except (TypeError, ValueError):
                 return None
+            return None if f != f else round(f, 3)  # f != f detects NaN (timed-out judge)
         out.append({"faithfulness": num(faith_col), "answer_relevancy": num(relev_col)})
     return out
 
