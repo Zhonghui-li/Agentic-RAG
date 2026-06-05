@@ -70,6 +70,24 @@ gcloud secrets add-iam-policy-binding LANGFUSE_SECRET_KEY --project proslm \
 
 Then `bash slug_service/deploy.sh` redeploys with tracing on.
 
+## Data store (pgvector)
+
+The dense catalog store is **Postgres/pgvector**, not a FAISS file baked into the
+image — `search_catalog` uses pgvector when `DATABASE_URL` is set (else FAISS locally).
+The image no longer ships the index, so the catalog updates in the DB without a rebuild.
+`deploy.sh` reads `DATABASE_URL` from Secret Manager; create it once (use the **-pooler**
+Neon connection string for serverless / many short connections):
+
+```bash
+printf '%s' 'postgresql://USER:PASS@ep-...-pooler.REGION.aws.neon.tech/db?sslmode=require' \
+    | gcloud secrets create DATABASE_URL --project proslm --data-file=-
+gcloud secrets add-iam-policy-binding DATABASE_URL --project proslm \
+    --member="serviceAccount:$(gcloud projects describe proslm --format='value(projectNumber)')-compute@developer.gserviceaccount.com" \
+    --role=roles/secretmanager.secretAccessor
+# load the catalog into Postgres once:
+DATABASE_URL=... OPENAI_API_KEY=... python scripts/build_ucsc_pgvector.py
+```
+
 ## Notes
 
 - The endpoint is a sync `def`, so FastAPI runs it in a threadpool — the

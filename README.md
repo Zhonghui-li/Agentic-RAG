@@ -36,7 +36,7 @@ look up its schedule) — the tool-call trace is shown in the UI.
 search_catalog  lookup_schedule  get_academic_calendar  web_search
 (hybrid RAG)    (structured)     (structured + dates)   (fallback)
    │
- BM25 + FAISS (RRF fusion) → CrossEncoder reranker → top course passages
+ BM25 + dense vectors (pgvector / FAISS) → RRF fusion → CrossEncoder reranker → top passages
 ```
 
 **Design principle — RAG vs tools:** unstructured text (course descriptions,
@@ -47,8 +47,12 @@ the most common agent-design mistake.
 ## Highlights
 
 - **Tool-calling ReAct agent** (LangGraph) with a recursion cap and graceful overflow.
-- **Hybrid retrieval** — BM25 + FAISS with RRF fusion, then a CrossEncoder reranker
-  (course codes like `CSE 101` need exact matching that dense vectors blur).
+- **Hybrid retrieval** — BM25 + dense vectors with RRF fusion, then a CrossEncoder
+  reranker (course codes like `CSE 101` need exact matching that dense vectors blur).
+- **pgvector store** — course embeddings live in **Postgres (pgvector)**, not a FAISS
+  file baked into the image, so the catalog updates without rebuilding/redeploying.
+  Migrated from FAISS behind a drop-in adapter (BM25/RRF/reranker unchanged), with the
+  **eval gate confirming zero retrieval regression** (FAISS kept as a local-dev fallback).
 - **Guardrails** — anti-hallucination (escalate to web search or honestly say "not in
   the catalog" instead of fabricating) and a **capability-bound scope** rule (scope =
   what the tools can answer, so adding data = adding tools, not editing prompts).
@@ -110,9 +114,11 @@ in the offline eval set and only the reference-free metrics run online).
 agents/slug_advisor_agent.py   ReAct orchestrator + system prompt / guardrails
 agents/slug_tools.py           lookup_schedule, get_academic_calendar, web_search
 agents/slug_retrieval.py       search_catalog (hybrid retrieval + reranker)
+agents/pg_vectorstore.py       pgvector adapter (FAISS-shaped; used when DATABASE_URL set)
 agents/observability.py        Langfuse tracing (key-gated, no-op without keys)
 agents/{hybrid_retriever,reranker}.py   reused retrieval engineering
 scripts/                       scrape catalog → build data / vectorstore / eval set
+scripts/build_ucsc_pgvector.py migrate the catalog into Postgres/pgvector
 data-ucsc/                     226 real CSE courses + calendar + schedule + 69-q eval
 eval/                          graders, run_eval, Ragas quality, baseline gate
 eval/score_traces.py           offline scorer: grade production traces → Langfuse
@@ -127,9 +133,13 @@ mcp_server/                    same tools exposed via Model Context Protocol (Fa
 cd agent_integration
 export OPENAI_API_KEY=sk-...  EMB_MODEL=text-embedding-3-small  GEN_LLM_MODEL=gpt-4o-mini
 
-# build the vectorstore once (FAISS index over the scraped catalog)
+# dense store — pick ONE:
+#  (a) local FAISS file (default when DATABASE_URL is unset)
 python scripts/build_ucsc_vectorstore.py --courses data-ucsc/cse_courses.json \
     --out vectorstore-ucsc/ucsc_cse_faiss
+#  (b) Postgres/pgvector (used automatically when DATABASE_URL is set)
+# export DATABASE_URL=postgresql://...:5432/db?sslmode=require
+# python scripts/build_ucsc_pgvector.py
 
 python -m agents.slug_advisor_agent "What are the prerequisites for CSE 142?"   # CLI
 uvicorn slug_service.app:app --port 8100   # web demo → http://localhost:8100

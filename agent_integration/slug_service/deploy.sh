@@ -30,7 +30,7 @@ gcloud run deploy slug-advisor \
   --memory 2Gi --cpu 2 \
   --timeout 120 --port 8080 \
   --set-env-vars EMB_MODEL=text-embedding-3-small,GEN_LLM_MODEL=gpt-4o-mini,RERANK=1,DAILY_QUOTA=150,RATE_LIMIT_PER_MIN=6,MAX_INPUT_CHARS=500,LANGFUSE_PUBLIC_KEY="$LANGFUSE_PUBLIC_KEY",LANGFUSE_HOST="$LANGFUSE_HOST",LANGFUSE_TRACING_ENVIRONMENT=production \
-  --set-secrets OPENAI_API_KEY=OPENAI_API_KEY:latest,LANGFUSE_SECRET_KEY=LANGFUSE_SECRET_KEY:latest
+  --set-secrets OPENAI_API_KEY=OPENAI_API_KEY:latest,LANGFUSE_SECRET_KEY=LANGFUSE_SECRET_KEY:latest,DATABASE_URL=DATABASE_URL:latest
 
 echo "Deployed. URL:"
 gcloud run services describe slug-advisor --project "$PROJECT" --region "$REGION" \

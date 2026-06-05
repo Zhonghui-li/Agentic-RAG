@@ -22,3 +22,7 @@ openai==1.75.0
 # LLM observability — traces (latency, token cost, tool usage) auto-activate in the
 # container because observability.py is key-gated on the LANGFUSE_* env vars.
 langfuse==4.7.1
+# pgvector store — used when DATABASE_URL is set (catalog lives in Postgres, not the
+# image). faiss-cpu stays installed for the import + local fallback.
+psycopg[binary]==3.3.4
+pgvector==0.4.2

@@ -17,10 +17,10 @@ RUN pip install --no-cache-dir -r slug_service/requirements.txt
 # Pre-bake the reranker model into the image (no runtime download / cold-start stall).
 RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')"
 
-# Code + data + prebuilt FAISS vectorstore (vectorstore is gitignored, baked here).
+# Code + structured data. The dense store is pgvector (Postgres) via DATABASE_URL —
+# no FAISS index baked into the image; the catalog updates in Postgres, not here.
 COPY agents/ ./agents/
 COPY data-ucsc/ ./data-ucsc/
-COPY vectorstore-ucsc/ ./vectorstore-ucsc/
 COPY slug_service/ ./slug_service/
 
 # Cloud Run injects $PORT (default 8080).
