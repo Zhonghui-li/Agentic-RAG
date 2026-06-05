@@ -2,14 +2,15 @@ name: Slug Advisor Eval
 
 # Two-layer eval gate:
 #   L1 (this PR / push)  -> deterministic unit tests, no LLM, no secrets, must be 100%.
-#   L2 (nightly / manual) -> full agent eval + Ragas, gated against eval/baseline.json.
+#   L2 (manual dispatch) -> full agent eval + Ragas, gated against eval/baseline.json.
 on:
   push:
     branches: [main, "feat/**"]
   pull_request:
     branches: [main]
-  schedule:
-    - cron: "0 8 * * *"   # nightly 08:00 UTC
+  # L2 (full agent + Ragas) needs OPENAI_API_KEY; run it on demand via the Actions
+  # "Run workflow" button (workflow_dispatch) instead of an unattended nightly cron,
+  # so we don't put the shared lab key in this public repo's CI.
   workflow_dispatch: {}
 
 jobs:
