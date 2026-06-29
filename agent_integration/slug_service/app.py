@@ -56,7 +56,40 @@ def advisor(q: Query, request: Request):
         raise HTTPException(429, "This demo has reached its daily limit. Please try again tomorrow.")
     # sync endpoint -> FastAPI runs it in a threadpool, so the blocking
     # LangGraph/LLM calls don't fight the event loop (the old service's async bug).
-    return run_advisor(q.question, agent=_agent)
+    try:
+        return run_advisor(q.question, agent=_agent)
+    except Exception as e:
+        # public testing: an LLM/timeout error should be a friendly message, not a 500
+        print(f"[/advisor] agent error: {type(e).__name__}: {e}")
+        return {"answer": "Sorry — I hit an error answering that. Please try again in a moment.",
+                "trace": [], "tools_used": [], "trace_id": None}
+
+
+class Feedback(BaseModel):
+    trace_id: str
+    value: int                       # 1 = thumbs up, 0 = thumbs down
+    question: str | None = None      # carried so the score row is self-explanatory in Langfuse
+    answer: str | None = None
+
+
+@app.post("/feedback")
+def feedback(fb: Feedback):
+    """Capture a user's thumbs up/down on an answer as a Langfuse score (name=user_feedback),
+    so community testing yields LABELED eval data, not just unlabeled traces. The question/answer
+    are attached as the score's metadata so a reviewer can read what was rated."""
+    if not (os.environ.get("LANGFUSE_PUBLIC_KEY") and os.environ.get("LANGFUSE_SECRET_KEY")):
+        return {"ok": False, "reason": "observability disabled"}
+    try:
+        from langfuse import get_client
+        lf = get_client()
+        meta = {k: v[:500] for k, v in (("question", fb.question), ("answer", fb.answer)) if v}
+        lf.create_score(name="user_feedback", value=float(1 if fb.value >= 1 else 0),
+                        trace_id=fb.trace_id, data_type="NUMERIC", metadata=(meta or None))
+        lf.flush()
+    except Exception as e:
+        print(f"[/feedback] {type(e).__name__}: {e}")
+        return {"ok": False}
+    return {"ok": True}
 
 
 @app.get("/health")

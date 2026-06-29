@@ -29,7 +29,7 @@ def sum_usage(messages):
 
 
 def _noop(**_):
-    pass
+    return None
 
 
 @contextmanager
@@ -51,6 +51,11 @@ def trace_agent(question):
     # latency, and model + usage_details let Langfuse compute $ cost — both on
     # the same row (no separate child, so no apparent "duplication").
     with lf.start_as_current_observation(name="slug-advisor", as_type="generation", input=question):
+        try:
+            trace_id = lf.get_current_trace_id()   # so user feedback can be scored onto this trace
+        except Exception:
+            trace_id = None
+
         def record(answer=None, tools_used=None, usage=None, contexts=None):
             try:
                 lf.update_current_generation(
@@ -67,6 +72,7 @@ def trace_agent(question):
                 lf.set_current_trace_io(input=question, output=answer)
             except Exception as e:
                 print(f"[langfuse] record skipped: {e}")
+            return trace_id
         yield record
     try:
         lf.flush()
