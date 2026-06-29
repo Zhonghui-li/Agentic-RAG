@@ -57,6 +57,7 @@ const chat = document.getElementById('chat');
 const form = document.getElementById('f');
 const input = document.getElementById('q');
 const send = document.getElementById('send');
+let history = [];  // [{role, content}] — sent each turn so follow-ups ('its prerequisites?') resolve
 
 function add(role, html) {
   const m = document.createElement('div');
@@ -79,7 +80,7 @@ form.addEventListener('submit', async (e) => {
   try {
     const r = await fetch('/advisor', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({question})
+      body: JSON.stringify({question, history})
     });
     const data = await r.json();
     if (!r.ok) {
@@ -87,6 +88,8 @@ form.addEventListener('submit', async (e) => {
         '<span class="hint">' + esc(data.detail || 'Something went wrong. Please try again.') + '</span>';
       send.disabled = false; input.focus(); return;
     }
+    history.push({ role:'user', content:question }, { role:'assistant', content:data.answer || '' });
+    history = history.slice(-12);   // keep recent turns (matches backend trim)
     let html = esc(data.answer || '(no answer)');
     if (data.trace && data.trace.length) {
       const n = data.trace.length;

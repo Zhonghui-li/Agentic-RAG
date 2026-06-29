@@ -15,7 +15,7 @@ import os
 from typing import Dict, List
 
 from langchain_core.tools import tool
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import ToolMessage, HumanMessage, AIMessage, trim_messages
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langgraph.errors import GraphRecursionError
@@ -23,17 +23,20 @@ from langgraph.errors import GraphRecursionError
 # Safety valve: cap how many agent<->tool super-steps a single question may take
 # (one tool-call round ≈ 2 super-steps). Prevents runaway loops / cost blowups.
 DEFAULT_RECURSION_LIMIT = 15
+MAX_HISTORY_MSGS = 12  # keep the last ~6 turns of prior conversation (client sends history)
 
 from agents.slug_retrieval import search_catalog as _search_catalog
 from agents.slug_tools import (
     lookup_schedule as _lookup_schedule,
     get_academic_calendar as _get_academic_calendar,
     web_search as _web_search,
-    _SCHEDULE,
+    _CALENDAR,
 )
 from agents import observability
 
-_TERMS = ", ".join(_SCHEDULE["term_list"])
+# The covered terms come from the calendar (the real source of truth for the current academic
+# year), so a year-rollover only needs calendar.json updated and the prompt stays consistent.
+_TERMS = ", ".join(_CALENDAR["quarters"].keys())
 
 # Wrap the plain functions as LangChain tools (name + docstring -> tool schema).
 TOOLS = [
@@ -49,7 +52,9 @@ advising. As tools are added your scope grows; you don't need new rules for that
 
 Use the tools to answer; do not rely on memory for facts:
 - search_catalog: course content, prerequisites, credits, requirements.
-- lookup_schedule: whether/when a course is offered, meeting time, seats.
+- lookup_schedule: whether/when a course is offered, meeting time, seats. This is SAMPLE/preview \
+data, NOT live UCSC enrollment — whenever you use it, tell the user the schedule and seats are \
+representative sample data, not real-time.
 - get_academic_calendar: quarter start/end, finals, enrollment dates, date math.
 - web_search: ONLY when the catalog/schedule/calendar tools cannot answer.
 
@@ -99,16 +104,35 @@ def _extract_trace(messages) -> List[Dict]:
     return trace
 
 
-def run_advisor(question: str, agent=None, verbose: bool = False,
+def _build_messages(question: str, history) -> List:
+    """Multi-turn: the client sends the prior conversation, the agent is stateless. Convert the
+    history to LangChain messages, trim to the last few turns to bound token cost/latency, then
+    append the new question — so follow-ups like 'what are its prerequisites?' resolve."""
+    prior = []
+    for m in history or []:
+        role, content = (m.get("role"), m.get("content")) if isinstance(m, dict) else (None, None)
+        if not content:
+            continue
+        if role == "user":
+            prior.append(HumanMessage(content))
+        elif role in ("assistant", "bot"):
+            prior.append(AIMessage(content))
+    prior = trim_messages(prior, token_counter=len, max_tokens=MAX_HISTORY_MSGS,
+                          strategy="last", include_system=False, allow_partial=False)
+    return prior + [HumanMessage(question)]
+
+
+def run_advisor(question: str, agent=None, history=None, verbose: bool = False,
                 recursion_limit: int = DEFAULT_RECURSION_LIMIT) -> Dict:
-    """Run the agent on a question. Returns {answer, trace, tools_used}."""
+    """Run the agent on a question. `history` (optional) is prior turns [{role, content}, ...]
+    for multi-turn follow-ups. Returns {answer, trace, tools_used, trace_id}."""
     agent = agent or build_agent()
     usage, contexts = None, []
     # the Langfuse span (if enabled) wraps the invoke so its duration is the real latency
     with observability.trace_agent(question) as record:
         try:
             result = agent.invoke(
-                {"messages": [("user", question)]},
+                {"messages": _build_messages(question, history)},
                 {"recursion_limit": recursion_limit},
             )
             messages = result["messages"]

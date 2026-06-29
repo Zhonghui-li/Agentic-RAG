@@ -43,6 +43,7 @@ app = FastAPI(title="UCSC Slug Advisor", lifespan=lifespan)
 
 class Query(BaseModel):
     question: str
+    history: list | None = None   # prior turns [{role, content}, ...] for multi-turn follow-ups
 
 
 @app.post("/advisor")
@@ -57,7 +58,7 @@ def advisor(q: Query, request: Request):
     # sync endpoint -> FastAPI runs it in a threadpool, so the blocking
     # LangGraph/LLM calls don't fight the event loop (the old service's async bug).
     try:
-        return run_advisor(q.question, agent=_agent)
+        return run_advisor(q.question, agent=_agent, history=q.history)
     except Exception as e:
         # public testing: an LLM/timeout error should be a friendly message, not a 500
         print(f"[/advisor] agent error: {type(e).__name__}: {e}")
