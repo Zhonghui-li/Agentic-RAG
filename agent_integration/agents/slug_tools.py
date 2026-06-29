@@ -51,10 +51,18 @@ def _iso_to_human(iso: str) -> str:
 # ----------------------------------------------------------------------------
 # Tool 1: schedule lookup (structured, exact match)
 # ----------------------------------------------------------------------------
+# Schedule/seat data is a representative SAMPLE (a few synthesized offerings), NOT live
+# pisa.ucsc.edu enrollment data. The tool surfaces this so the agent never presents the
+# meeting times / seat counts as if they were real. Live integration is a backlog item.
+_SCHEDULE_SAMPLE_NOTE = ("[SAMPLE schedule — representative demo data, not live UCSC "
+                         "enrollment; times/seats are illustrative, not real-time.]")
+
+
 def lookup_schedule(course_code: str, term: Optional[str] = None) -> str:
-    """Look up when a course is offered: term, meeting days/time, location,
-    instructor, and seat availability. `term` is optional (e.g. 'Fall 2025');
-    omit it to see all terms the course is offered."""
+    """Look up a SAMPLE offering (term, meeting days/time, location, instructor, seat
+    availability). NOTE: this is representative demo data, NOT live pisa.ucsc.edu enrollment
+    — times and seat counts are illustrative. Always tell the user it's sample/not-live.
+    `term` is optional (e.g. 'Fall 2025'); omit it to see all sample terms."""
     code = _norm_code(course_code)
     hits = [o for o in _SCHEDULE["offerings"] if o["course_code"] == code]
     if term:
@@ -63,8 +71,8 @@ def lookup_schedule(course_code: str, term: Optional[str] = None) -> str:
 
     if not hits:
         scope = f" in {term}" if term else ""
-        return (f"{code} has no scheduled offering{scope}. "
-                f"(Terms covered: {', '.join(_SCHEDULE['term_list'])}.)")
+        return (f"{code} has no offering in the sample schedule{scope}. "
+                f"(Sample terms: {', '.join(_SCHEDULE['term_list'])}.) {_SCHEDULE_SAMPLE_NOTE}")
 
     lines = []
     for o in hits:
@@ -77,7 +85,7 @@ def lookup_schedule(course_code: str, term: Optional[str] = None) -> str:
             f"{o['start_time']}–{o['end_time']}, {o['location']}, "
             f"instructor {o['instructor']}. {avail}. Status: {o['status']}."
         )
-    return "\n".join(lines)
+    return "\n".join(lines) + "\n" + _SCHEDULE_SAMPLE_NOTE
 
 
 # ----------------------------------------------------------------------------

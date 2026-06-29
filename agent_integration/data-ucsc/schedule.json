@@ -1,15 +1,15 @@
 {
   "_note": "Representative offerings synthesized from real catalog courses; not live pisa.ucsc.edu data. Course identities/titles are real.",
   "term_list": [
-    "Fall 2025",
-    "Winter 2026",
-    "Spring 2026"
+    "Fall 2026",
+    "Winter 2027",
+    "Spring 2027"
   ],
   "offerings": [
     {
       "course_code": "CSE 3",
       "title": "Computing Technology in a Changing Society",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -24,7 +24,7 @@
     {
       "course_code": "CSE 3",
       "title": "Computing Technology in a Changing Society",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -39,7 +39,7 @@
     {
       "course_code": "CSE 5J",
       "title": "Introduction to Programming in Java",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -54,7 +54,7 @@
     {
       "course_code": "CSE 5J",
       "title": "Introduction to Programming in Java",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -69,7 +69,7 @@
     {
       "course_code": "CSE 10",
       "title": "Introduction to Computer Science",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -84,7 +84,7 @@
     {
       "course_code": "CSE 10",
       "title": "Introduction to Computer Science",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -99,7 +99,7 @@
     {
       "course_code": "CSE 12",
       "title": "Computer Systems and Assembly Language and Lab",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -114,7 +114,7 @@
     {
       "course_code": "CSE 13S",
       "title": "Computer Systems and C Programming",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -129,7 +129,7 @@
     {
       "course_code": "CSE 16",
       "title": "Applied Discrete Mathematics",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -144,7 +144,7 @@
     {
       "course_code": "CSE 20",
       "title": "Beginning Programming in Python",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -159,7 +159,7 @@
     {
       "course_code": "CSE 20",
       "title": "Beginning Programming in Python",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -174,7 +174,7 @@
     {
       "course_code": "CSE 30",
       "title": "Programming Abstractions: Python",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -189,7 +189,7 @@
     {
       "course_code": "CSE 40",
       "title": "Machine Learning Basics: Data Analysis and Empirical Methods",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -204,7 +204,7 @@
     {
       "course_code": "CSE 40",
       "title": "Machine Learning Basics: Data Analysis and Empirical Methods",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -219,7 +219,7 @@
     {
       "course_code": "CSE 80A",
       "title": "Universal Access: Disability, Technology, and Society",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -234,7 +234,7 @@
     {
       "course_code": "CSE 80A",
       "title": "Universal Access: Disability, Technology, and Society",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -249,7 +249,7 @@
     {
       "course_code": "CSE 80L",
       "title": "Social Data Analytics and Visualization",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -264,7 +264,7 @@
     {
       "course_code": "CSE 80L",
       "title": "Social Data Analytics and Visualization",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -279,7 +279,7 @@
     {
       "course_code": "CSE 80N",
       "title": "Introduction to Networking and the Internet",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -294,7 +294,7 @@
     {
       "course_code": "CSE 80N",
       "title": "Introduction to Networking and the Internet",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -309,7 +309,7 @@
     {
       "course_code": "CSE 80S",
       "title": "Social Networks",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -324,7 +324,7 @@
     {
       "course_code": "CSE 94",
       "title": "Group Tutorial",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -339,7 +339,7 @@
     {
       "course_code": "CSE 94F",
       "title": "Group Tutorial",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -354,7 +354,7 @@
     {
       "course_code": "CSE 94F",
       "title": "Group Tutorial",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -369,7 +369,7 @@
     {
       "course_code": "CSE 99",
       "title": "Tutorial",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -384,7 +384,7 @@
     {
       "course_code": "CSE 99F",
       "title": "Tutorial",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -399,7 +399,7 @@
     {
       "course_code": "CSE 100",
       "title": "Logic Design",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -414,7 +414,7 @@
     {
       "course_code": "CSE 100L",
       "title": "Logic Design Laboratory",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -429,7 +429,7 @@
     {
       "course_code": "CSE 101",
       "title": "Introduction to Data Structures and Algorithms",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -444,7 +444,7 @@
     {
       "course_code": "CSE 101M",
       "title": "Mathematical Thinking for Computer Science",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -459,7 +459,7 @@
     {
       "course_code": "CSE 101M",
       "title": "Mathematical Thinking for Computer Science",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -474,7 +474,7 @@
     {
       "course_code": "CSE 101P",
       "title": "Introduction to Data Structures and Algorithms in Python",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -489,7 +489,7 @@
     {
       "course_code": "CSE 101P",
       "title": "Introduction to Data Structures and Algorithms in Python",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -504,7 +504,7 @@
     {
       "course_code": "CSE 102",
       "title": "Introduction to Analysis of Algorithms",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -519,7 +519,7 @@
     {
       "course_code": "CSE 103",
       "title": "Computational Models",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -534,7 +534,7 @@
     {
       "course_code": "CSE 104",
       "title": "Computability and Computational Complexity",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -549,7 +549,7 @@
     {
       "course_code": "CSE 105",
       "title": "Modern Algorithmic Toolbox",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -564,7 +564,7 @@
     {
       "course_code": "CSE 106",
       "title": "Applied Graph Theory and Algorithms",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -579,7 +579,7 @@
     {
       "course_code": "CSE 107",
       "title": "Probability and Statistics for Engineers",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -594,7 +594,7 @@
     {
       "course_code": "CSE 107",
       "title": "Probability and Statistics for Engineers",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -609,7 +609,7 @@
     {
       "course_code": "CSE 108",
       "title": "Algorithmic Foundations of Cryptography",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -624,7 +624,7 @@
     {
       "course_code": "CSE 108",
       "title": "Algorithmic Foundations of Cryptography",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -639,7 +639,7 @@
     {
       "course_code": "CSE 108C",
       "title": "Computing on Encrypted Data",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -654,7 +654,7 @@
     {
       "course_code": "CSE 110A",
       "title": "Fundamentals of Compiler Design I",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -669,7 +669,7 @@
     {
       "course_code": "CSE 110B",
       "title": "Fundamentals of Compiler Design II",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -684,7 +684,7 @@
     {
       "course_code": "CSE 111",
       "title": "Advanced Programming",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -699,7 +699,7 @@
     {
       "course_code": "CSE 112",
       "title": "Comparative Programming Languages",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -714,7 +714,7 @@
     {
       "course_code": "CSE 113",
       "title": "Parallel and Concurrent Programming",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -729,7 +729,7 @@
     {
       "course_code": "CSE 114A",
       "title": "Foundations of Programming Languages",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -744,7 +744,7 @@
     {
       "course_code": "CSE 114B",
       "title": "Functional Programming",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -759,7 +759,7 @@
     {
       "course_code": "CSE 115A",
       "title": "Introduction to Software Engineering",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -774,7 +774,7 @@
     {
       "course_code": "CSE 115B",
       "title": "Software Design Project",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -789,7 +789,7 @@
     {
       "course_code": "CSE 115C",
       "title": "Software Design Project II",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -804,7 +804,7 @@
     {
       "course_code": "CSE 115D",
       "title": "Software Design Project - Accelerated",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -819,7 +819,7 @@
     {
       "course_code": "CSE 117",
       "title": "Open Source Programming",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -834,7 +834,7 @@
     {
       "course_code": "CSE 117",
       "title": "Open Source Programming",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -849,7 +849,7 @@
     {
       "course_code": "CSE 118",
       "title": "Mobile Applications",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -864,7 +864,7 @@
     {
       "course_code": "CSE 118",
       "title": "Mobile Applications",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -879,7 +879,7 @@
     {
       "course_code": "CSE 119",
       "title": "Software for Society",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -894,7 +894,7 @@
     {
       "course_code": "CSE 119",
       "title": "Software for Society",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -909,7 +909,7 @@
     {
       "course_code": "CSE 120",
       "title": "Computer Architecture",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -924,7 +924,7 @@
     {
       "course_code": "CSE 121",
       "title": "Embedded System Design",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -939,7 +939,7 @@
     {
       "course_code": "CSE 122",
       "title": "Introduction to VLSI Digital System Design",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -954,7 +954,7 @@
     {
       "course_code": "CSE 122",
       "title": "Introduction to VLSI Digital System Design",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -969,7 +969,7 @@
     {
       "course_code": "CSE 123A",
       "title": "Engineering Design Project I",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -984,7 +984,7 @@
     {
       "course_code": "CSE 123A",
       "title": "Engineering Design Project I",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -999,7 +999,7 @@
     {
       "course_code": "CSE 123B",
       "title": "Engineering Design Project II",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -1014,7 +1014,7 @@
     {
       "course_code": "CSE 125",
       "title": "Logic Design with Verilog",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -1029,7 +1029,7 @@
     {
       "course_code": "CSE 127A",
       "title": "Chip Design Capstone I",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1044,7 +1044,7 @@
     {
       "course_code": "CSE 127A",
       "title": "Chip Design Capstone I",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -1059,7 +1059,7 @@
     {
       "course_code": "CSE 127B",
       "title": "Chip Design Capstone II",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -1074,7 +1074,7 @@
     {
       "course_code": "CSE 129A",
       "title": "Capstone Project I",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1089,7 +1089,7 @@
     {
       "course_code": "CSE 129B",
       "title": "Capstone Project II",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1104,7 +1104,7 @@
     {
       "course_code": "CSE 129B",
       "title": "Capstone Project II",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -1119,7 +1119,7 @@
     {
       "course_code": "CSE 129C",
       "title": "Capstone Project III",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -1134,7 +1134,7 @@
     {
       "course_code": "CSE 130",
       "title": "Principles of Computer Systems Design",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -1149,7 +1149,7 @@
     {
       "course_code": "CSE 132",
       "title": "Computer Security",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -1164,7 +1164,7 @@
     {
       "course_code": "CSE 132",
       "title": "Computer Security",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -1179,7 +1179,7 @@
     {
       "course_code": "CSE 134",
       "title": "Embedded Operating Systems",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1194,7 +1194,7 @@
     {
       "course_code": "CSE 138",
       "title": "Distributed Systems",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1209,7 +1209,7 @@
     {
       "course_code": "CSE 140",
       "title": "Artificial Intelligence",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1224,7 +1224,7 @@
     {
       "course_code": "CSE 140",
       "title": "Artificial Intelligence",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1239,7 +1239,7 @@
     {
       "course_code": "CSE 142",
       "title": "Machine Learning",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1254,7 +1254,7 @@
     {
       "course_code": "CSE 142",
       "title": "Machine Learning",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1269,7 +1269,7 @@
     {
       "course_code": "CSE 143",
       "title": "Introduction to Natural Language Processing",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -1284,7 +1284,7 @@
     {
       "course_code": "CSE 144",
       "title": "Applied Machine Learning: Deep Learning",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -1299,7 +1299,7 @@
     {
       "course_code": "CSE 145",
       "title": "Introduction to Data Mining",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1314,7 +1314,7 @@
     {
       "course_code": "CSE 146",
       "title": "Ethics and Algorithms",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1329,7 +1329,7 @@
     {
       "course_code": "CSE 150",
       "title": "Introduction to Computer Networks",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1344,7 +1344,7 @@
     {
       "course_code": "CSE 151",
       "title": "Advanced Computer Networks",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -1359,7 +1359,7 @@
     {
       "course_code": "CSE 151L",
       "title": "Advanced Computer Networks Laboratory",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -1374,7 +1374,7 @@
     {
       "course_code": "CSE 152",
       "title": "Principles of Computer Communication",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -1389,7 +1389,7 @@
     {
       "course_code": "CSE 152",
       "title": "Principles of Computer Communication",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1404,7 +1404,7 @@
     {
       "course_code": "CSE 153",
       "title": "Network Security and Privacy",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1419,7 +1419,7 @@
     {
       "course_code": "CSE 156",
       "title": "Network Programming",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1434,7 +1434,7 @@
     {
       "course_code": "CSE 156L",
       "title": "Network Programming Laboratory",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1449,7 +1449,7 @@
     {
       "course_code": "CSE 157",
       "title": "Internet of Things",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1464,7 +1464,7 @@
     {
       "course_code": "CSE 160",
       "title": "Introduction to Computer Graphics",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1479,7 +1479,7 @@
     {
       "course_code": "CSE 161",
       "title": "Introduction to Data Visualization",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1494,7 +1494,7 @@
     {
       "course_code": "CSE 161",
       "title": "Introduction to Data Visualization",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1509,7 +1509,7 @@
     {
       "course_code": "CSE 161L",
       "title": "Data Visualization Laboratory",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1524,7 +1524,7 @@
     {
       "course_code": "CSE 162",
       "title": "Advanced Computer Graphics and Animation",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -1539,7 +1539,7 @@
     {
       "course_code": "CSE 162L",
       "title": "Advanced Computer Graphics and Animation Laboratory",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1554,7 +1554,7 @@
     {
       "course_code": "CSE 162L",
       "title": "Advanced Computer Graphics and Animation Laboratory",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1569,7 +1569,7 @@
     {
       "course_code": "CSE 163",
       "title": "Data Programming for Visualization",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1584,7 +1584,7 @@
     {
       "course_code": "CSE 164",
       "title": "Computer Vision",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1599,7 +1599,7 @@
     {
       "course_code": "CSE 165",
       "title": "Human-Computer Interaction",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -1614,7 +1614,7 @@
     {
       "course_code": "CSE 167",
       "title": "Mobile Sensing and Interaction",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -1629,7 +1629,7 @@
     {
       "course_code": "CSE 168",
       "title": "Introduction to Augmented Reality and Virtual Reality",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -1644,7 +1644,7 @@
     {
       "course_code": "CSE 180",
       "title": "Database Systems I",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -1659,7 +1659,7 @@
     {
       "course_code": "CSE 181",
       "title": "Database Systems II",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1674,7 +1674,7 @@
     {
       "course_code": "CSE 182",
       "title": "Introduction to Database Management Systems",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -1689,7 +1689,7 @@
     {
       "course_code": "CSE 183",
       "title": "Web Applications",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1704,7 +1704,7 @@
     {
       "course_code": "CSE 183",
       "title": "Web Applications",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1719,7 +1719,7 @@
     {
       "course_code": "CSE 184",
       "title": "Data Wrangling and Web Scraping",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1734,7 +1734,7 @@
     {
       "course_code": "CSE 184",
       "title": "Data Wrangling and Web Scraping",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1749,7 +1749,7 @@
     {
       "course_code": "CSE 185C",
       "title": "Building Careers in Emerging Technology: Sustainability, Innovation, and Impact",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -1764,7 +1764,7 @@
     {
       "course_code": "CSE 185E",
       "title": "Technical Writing for Computer Science and Engineering",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1779,7 +1779,7 @@
     {
       "course_code": "CSE 186",
       "title": "Full Stack Web Development I",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -1794,7 +1794,7 @@
     {
       "course_code": "CSE 186",
       "title": "Full Stack Web Development I",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1809,7 +1809,7 @@
     {
       "course_code": "CSE 187",
       "title": "Full Stack Web Development II",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1824,7 +1824,7 @@
     {
       "course_code": "CSE 187",
       "title": "Full Stack Web Development II",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1839,7 +1839,7 @@
     {
       "course_code": "CSE 191",
       "title": "Computer Science and Technology Seminar",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -1854,7 +1854,7 @@
     {
       "course_code": "CSE 191",
       "title": "Computer Science and Technology Seminar",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1869,7 +1869,7 @@
     {
       "course_code": "CSE 192",
       "title": "Supervised Student Teaching/Tutoring",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1884,7 +1884,7 @@
     {
       "course_code": "CSE 192F",
       "title": "Supervised Student Teaching/Tutoring",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1899,7 +1899,7 @@
     {
       "course_code": "CSE 193",
       "title": "Field Study",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1914,7 +1914,7 @@
     {
       "course_code": "CSE 193F",
       "title": "Field Study",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1929,7 +1929,7 @@
     {
       "course_code": "CSE 194",
       "title": "Group Tutorial",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -1944,7 +1944,7 @@
     {
       "course_code": "CSE 194F",
       "title": "Group Tutorial",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -1959,7 +1959,7 @@
     {
       "course_code": "CSE 195",
       "title": "Senior Thesis Research",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -1974,7 +1974,7 @@
     {
       "course_code": "CSE 195",
       "title": "Senior Thesis Research",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -1989,7 +1989,7 @@
     {
       "course_code": "CSE 195F",
       "title": "Senior Thesis Research",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2004,7 +2004,7 @@
     {
       "course_code": "CSE 198",
       "title": "Individual Study or Research",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2019,7 +2019,7 @@
     {
       "course_code": "CSE 198F",
       "title": "Individual Study or Research",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2034,7 +2034,7 @@
     {
       "course_code": "CSE 199",
       "title": "Tutorial",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2049,7 +2049,7 @@
     {
       "course_code": "CSE 199F",
       "title": "Tutorial",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2064,7 +2064,7 @@
     {
       "course_code": "CSE 200",
       "title": "Research and Teaching in Computer Science and Engineering",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2079,7 +2079,7 @@
     {
       "course_code": "CSE 201",
       "title": "Analysis of Algorithms",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2094,7 +2094,7 @@
     {
       "course_code": "CSE 202",
       "title": "Combinatorial Algorithms",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -2109,7 +2109,7 @@
     {
       "course_code": "CSE 203",
       "title": "Randomized Algorithms",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2124,7 +2124,7 @@
     {
       "course_code": "CSE 204",
       "title": "Computational Models and Complexity",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2139,7 +2139,7 @@
     {
       "course_code": "CSE 205",
       "title": "Logic in Computer Science",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -2154,7 +2154,7 @@
     {
       "course_code": "CSE 206C",
       "title": "Foundations of Modern Cryptography",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2169,7 +2169,7 @@
     {
       "course_code": "CSE 206G",
       "title": "Game Theory and Applications in Computer Science and Engineering",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2184,7 +2184,7 @@
     {
       "course_code": "CSE 207",
       "title": "Graph Algorithms",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2199,7 +2199,7 @@
     {
       "course_code": "CSE 209A",
       "title": "Modern Algorithmic Toolbox",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2214,7 +2214,7 @@
     {
       "course_code": "CSE 210A",
       "title": "Programming Languages",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2229,7 +2229,7 @@
     {
       "course_code": "CSE 210B",
       "title": "Advanced Programming Languages",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -2244,7 +2244,7 @@
     {
       "course_code": "CSE 211",
       "title": "Compiler Design",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2259,7 +2259,7 @@
     {
       "course_code": "CSE 212A",
       "title": "Software Engineering",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2274,7 +2274,7 @@
     {
       "course_code": "CSE 212B",
       "title": "Software Reuse and Component-Based Software Engineering",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2289,7 +2289,7 @@
     {
       "course_code": "CSE 214",
       "title": "Principles of Database Systems",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2304,7 +2304,7 @@
     {
       "course_code": "CSE 215",
       "title": "Design and Implementation of Database Systems",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2319,7 +2319,7 @@
     {
       "course_code": "CSE 216",
       "title": "Formal Methods",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2334,7 +2334,7 @@
     {
       "course_code": "CSE 220",
       "title": "Computer Architecture",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -2349,7 +2349,7 @@
     {
       "course_code": "CSE 221",
       "title": "Advanced Microprocessor Design",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -2364,7 +2364,7 @@
     {
       "course_code": "CSE 221L",
       "title": "Advanced Microprocessor Design Laboratory",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2379,7 +2379,7 @@
     {
       "course_code": "CSE 222A",
       "title": "VLSI Digital System Design",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2394,7 +2394,7 @@
     {
       "course_code": "CSE 222B",
       "title": "VLSI System-on-a-Chip Design",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -2409,7 +2409,7 @@
     {
       "course_code": "CSE 225",
       "title": "Introduction to ASIC Systems Design",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2424,7 +2424,7 @@
     {
       "course_code": "CSE 226",
       "title": "Advanced Parallel Processing",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -2439,7 +2439,7 @@
     {
       "course_code": "CSE 228A",
       "title": "Agile Hardware Design",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -2454,7 +2454,7 @@
     {
       "course_code": "CSE 229",
       "title": "Field-Programmable Gate Arrays Computer-Assisted Design",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2469,7 +2469,7 @@
     {
       "course_code": "CSE 231",
       "title": "Advanced Operating Systems",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -2484,7 +2484,7 @@
     {
       "course_code": "CSE 232",
       "title": "Distributed Systems",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -2499,7 +2499,7 @@
     {
       "course_code": "CSE 233",
       "title": "Advanced Computer Security",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -2514,7 +2514,7 @@
     {
       "course_code": "CSE 234",
       "title": "Understanding Cryptography",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -2529,7 +2529,7 @@
     {
       "course_code": "CSE 235",
       "title": "Cyber-Physical Systems Security",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2544,7 +2544,7 @@
     {
       "course_code": "CSE 237",
       "title": "Storage Systems",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2559,7 +2559,7 @@
     {
       "course_code": "CSE 239",
       "title": "Advanced Cloud Computing",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2574,7 +2574,7 @@
     {
       "course_code": "CSE 239A",
       "title": "Private Computation on Encrypted Data",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2589,7 +2589,7 @@
     {
       "course_code": "CSE 240",
       "title": "Artificial Intelligence",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -2604,7 +2604,7 @@
     {
       "course_code": "CSE 241",
       "title": "Knowledge Engineering",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2619,7 +2619,7 @@
     {
       "course_code": "CSE 242",
       "title": "Machine Learning",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -2634,7 +2634,7 @@
     {
       "course_code": "CSE 243",
       "title": "Data Mining",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -2649,7 +2649,7 @@
     {
       "course_code": "CSE 244A",
       "title": "Foundations of Deep Learning",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -2664,7 +2664,7 @@
     {
       "course_code": "CSE 244B",
       "title": "Machine Learning for Natural Language Processing",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -2679,7 +2679,7 @@
     {
       "course_code": "CSE 244C",
       "title": "Deep Learning for Advanced Computer Vision",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -2694,7 +2694,7 @@
     {
       "course_code": "CSE 245",
       "title": "Computational Models of Discourse and Dialogue",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -2709,7 +2709,7 @@
     {
       "course_code": "CSE 246",
       "title": "Responsible Data Science",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2724,7 +2724,7 @@
     {
       "course_code": "CSE 247",
       "title": "Projects in Artificial Intelligence",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2739,7 +2739,7 @@
     {
       "course_code": "CSE 247B",
       "title": "Projects in Computer Science",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -2754,7 +2754,7 @@
     {
       "course_code": "CSE 248",
       "title": "Foundations of Data Science",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -2769,7 +2769,7 @@
     {
       "course_code": "CSE 249",
       "title": "Large-Scale Web Analytics and Machine Learning",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -2784,7 +2784,7 @@
     {
       "course_code": "CSE 250A",
       "title": "Computer Networks",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2799,7 +2799,7 @@
     {
       "course_code": "CSE 250B",
       "title": "Principles of Computer Communication",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -2814,7 +2814,7 @@
     {
       "course_code": "CSE 250C",
       "title": "High Speed Computer Networks",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2829,7 +2829,7 @@
     {
       "course_code": "CSE 253",
       "title": "Network Security",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -2844,7 +2844,7 @@
     {
       "course_code": "CSE 257",
       "title": "Wireless and Mobile Networks",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2859,7 +2859,7 @@
     {
       "course_code": "CSE 258",
       "title": "Spectral Graph Theory",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -2874,7 +2874,7 @@
     {
       "course_code": "CSE 259",
       "title": "Sensor Networks",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2889,7 +2889,7 @@
     {
       "course_code": "CSE 260",
       "title": "Computer Graphics",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2904,7 +2904,7 @@
     {
       "course_code": "CSE 261",
       "title": "Advanced Visualization",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -2919,7 +2919,7 @@
     {
       "course_code": "CSE 262",
       "title": "Computer Animation",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -2934,7 +2934,7 @@
     {
       "course_code": "CSE 263",
       "title": "Data Driven Discovery and Visualization",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -2949,7 +2949,7 @@
     {
       "course_code": "CSE 264",
       "title": "Computer Vision",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -2964,7 +2964,7 @@
     {
       "course_code": "CSE 265",
       "title": "Human-Computer Interaction",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -2979,7 +2979,7 @@
     {
       "course_code": "CSE 269",
       "title": "Approximation Algorithms",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -2994,7 +2994,7 @@
     {
       "course_code": "CSE 272",
       "title": "Information Retrieval",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -3009,7 +3009,7 @@
     {
       "course_code": "CSE 276",
       "title": "Optimization Theory and Applications",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3024,7 +3024,7 @@
     {
       "course_code": "CSE 277",
       "title": "Random Process Models in Engineering",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -3039,7 +3039,7 @@
     {
       "course_code": "CSE 279",
       "title": "Data Mining and Business Analytics in Knowledge Services",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -3054,7 +3054,7 @@
     {
       "course_code": "CSE 280A",
       "title": "Seminar in Computer Science and Engineering",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MW",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -3069,7 +3069,7 @@
     {
       "course_code": "CSE 280D",
       "title": "Seminar in Database Systems",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -3084,7 +3084,7 @@
     {
       "course_code": "CSE 280F",
       "title": "Seminar on Software Engineering",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -3099,7 +3099,7 @@
     {
       "course_code": "CSE 280G",
       "title": "Hardware Systems Collective Seminar",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3114,7 +3114,7 @@
     {
       "course_code": "CSE 280H",
       "title": "Seminar in Human Computation Systems",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3129,7 +3129,7 @@
     {
       "course_code": "CSE 280I",
       "title": "Seminar on Information Retrieval and Knowledge Management",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -3144,7 +3144,7 @@
     {
       "course_code": "CSE 280J",
       "title": "Seminar on Computer Graphics",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -3159,7 +3159,7 @@
     {
       "course_code": "CSE 280K",
       "title": "Sales and Marketing for Technologists and Engineers",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -3174,7 +3174,7 @@
     {
       "course_code": "CSE 280L",
       "title": "Seminar on Logic in Computer Science",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -3189,7 +3189,7 @@
     {
       "course_code": "CSE 280M",
       "title": "Seminar on Machine Learning",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3204,7 +3204,7 @@
     {
       "course_code": "CSE 280N",
       "title": "Seminar on Networks",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3219,7 +3219,7 @@
     {
       "course_code": "CSE 280O",
       "title": "Languages, Systems, and Data Seminar",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3234,7 +3234,7 @@
     {
       "course_code": "CSE 280P",
       "title": "Seminar on Parallel Processing",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -3249,7 +3249,7 @@
     {
       "course_code": "CSE 280S",
       "title": "Seminar on Computer Systems",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -3264,7 +3264,7 @@
     {
       "course_code": "CSE 280T",
       "title": "Seminar on New Technologies",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -3279,7 +3279,7 @@
     {
       "course_code": "CSE 280V",
       "title": "Seminar on Computer Vision",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3294,7 +3294,7 @@
     {
       "course_code": "CSE 280X",
       "title": "Seminar in Distributed Systems",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3309,7 +3309,7 @@
     {
       "course_code": "CSE 280Z",
       "title": "Seminar in Natural Language Processing and Dialogue",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3324,7 +3324,7 @@
     {
       "course_code": "CSE 285",
       "title": "Technical Writing for Engineering Graduates",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -3339,7 +3339,7 @@
     {
       "course_code": "CSE 290A",
       "title": "Topics in Algorithms and Complexity Theory: Probabilistic Algorithms and Average Case Analysis",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -3354,7 +3354,7 @@
     {
       "course_code": "CSE 290C",
       "title": "Advanced Topics in Machine Learning",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3369,7 +3369,7 @@
     {
       "course_code": "CSE 290D",
       "title": "Neural Computation",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3384,7 +3384,7 @@
     {
       "course_code": "CSE 290E",
       "title": "Object-Oriented Programming Methodology",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3399,7 +3399,7 @@
     {
       "course_code": "CSE 290F",
       "title": "Applications of Combinatorics",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3414,7 +3414,7 @@
     {
       "course_code": "CSE 290G",
       "title": "Topics in Software Engineering",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -3429,7 +3429,7 @@
     {
       "course_code": "CSE 290H",
       "title": "Topics in Database Systems",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MW",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -3444,7 +3444,7 @@
     {
       "course_code": "CSE 290J",
       "title": "Advanced Topics in Computer Graphics and Visual Computing",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3459,7 +3459,7 @@
     {
       "course_code": "CSE 290K",
       "title": "Advanced Topics in Natural Language Processing",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3474,7 +3474,7 @@
     {
       "course_code": "CSE 290L",
       "title": "Topics in Crowdsourcing and Collaboration",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -3489,7 +3489,7 @@
     {
       "course_code": "CSE 290M",
       "title": "Topics in Parallel Computation",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3504,7 +3504,7 @@
     {
       "course_code": "CSE 290N",
       "title": "Topics in Computer Performance",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3519,7 +3519,7 @@
     {
       "course_code": "CSE 290O",
       "title": "Algorithmic Foundations of Convex Optimization",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3534,7 +3534,7 @@
     {
       "course_code": "CSE 290P",
       "title": "Data Privacy Via Machine Learning, and Back",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -3549,7 +3549,7 @@
     {
       "course_code": "CSE 290Q",
       "title": "Topics in Programming Languages",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "16:00",
       "end_time": "17:05",
@@ -3564,7 +3564,7 @@
     {
       "course_code": "CSE 290S",
       "title": "Advanced Topics in Computer Systems",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3579,7 +3579,7 @@
     {
       "course_code": "CSE 290T",
       "title": "Topics in Computing for Society",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3594,7 +3594,7 @@
     {
       "course_code": "CSE 290X",
       "title": "Cryptography and Computer Security",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3609,7 +3609,7 @@
     {
       "course_code": "CSE 293",
       "title": "Advanced Topics in Computer Science & Engineering",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -3624,7 +3624,7 @@
     {
       "course_code": "CSE 296",
       "title": "Masters Project",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3639,7 +3639,7 @@
     {
       "course_code": "CSE 297A",
       "title": "Individual Study or Research",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3654,7 +3654,7 @@
     {
       "course_code": "CSE 297B",
       "title": "Individual Study or Research",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3669,7 +3669,7 @@
     {
       "course_code": "CSE 297C",
       "title": "Individual Study or Research",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "TuTh",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -3684,7 +3684,7 @@
     {
       "course_code": "CSE 297F",
       "title": "Independent Study or Research",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3699,7 +3699,7 @@
     {
       "course_code": "CSE 299A",
       "title": "Thesis Research",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3714,7 +3714,7 @@
     {
       "course_code": "CSE 299B",
       "title": "Thesis Research",
-      "term": "Spring 2026",
+      "term": "Spring 2027",
       "days": "MWF",
       "start_time": "09:20",
       "end_time": "10:25",
@@ -3729,7 +3729,7 @@
     {
       "course_code": "CSE 299C",
       "title": "Thesis Research",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "12:00",
       "end_time": "13:05",
@@ -3744,7 +3744,7 @@
     {
       "course_code": "CSE 299F",
       "title": "Thesis Research",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3759,7 +3759,7 @@
     {
       "course_code": "ECE 253",
       "title": "Introduction to Information Theory",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3774,7 +3774,7 @@
     {
       "course_code": "ECON 166B",
       "title": "Game Theory and Applications II",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3789,7 +3789,7 @@
     {
       "course_code": "ECON 272",
       "title": "Evolutionary Game Theory",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3804,7 +3804,7 @@
     {
       "course_code": "GCH 41",
       "title": "Clinical AI Applications for Health and Society",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3819,7 +3819,7 @@
     {
       "course_code": "PHYS 150",
       "title": "Quantum Computing",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
@@ -3834,7 +3834,7 @@
     {
       "course_code": "STAT 266A",
       "title": "Data Visualization and Statistical Programming in R",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MW",
       "start_time": "10:40",
       "end_time": "11:45",
@@ -3849,7 +3849,7 @@
     {
       "course_code": "STAT 266B",
       "title": "Advanced Statistical Programming in R",
-      "term": "Winter 2026",
+      "term": "Winter 2027",
       "days": "TuTh",
       "start_time": "13:20",
       "end_time": "14:25",
@@ -3864,7 +3864,7 @@
     {
       "course_code": "STAT 266C",
       "title": "Introduction to Data Wrangling",
-      "term": "Fall 2025",
+      "term": "Fall 2026",
       "days": "MWF",
       "start_time": "14:40",
       "end_time": "15:45",
