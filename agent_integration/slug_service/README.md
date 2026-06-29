@@ -27,7 +27,9 @@ Then open http://localhost:8100
 - `GET /` — chat UI
 - `GET /health` — `{"status":"ok","agent_loaded":true}`
 - `POST /advisor` — body `{"question": "..."}` →
-  `{"answer": "...", "trace": [{"tool","args"}], "tools_used": [...]}`
+  `{"answer": "...", "trace": [{"tool","args"}], "tools_used": [...], "trace_id": "..."}`
+- `POST /feedback` — body `{"trace_id", "value" (1=👍/0=👎), "question?", "answer?"}` →
+  writes a `user_feedback` score onto that Langfuse trace (the UI's 👍/👎 buttons call this)
 
 ## Abuse / cost controls (for public deploy)
 
@@ -55,7 +57,10 @@ alert; optionally ask the lab for a project-scoped OpenAI key with its own low c
 
 The agent is traced in Langfuse (latency, token cost, tools) when the `LANGFUSE_*`
 env vars are present — `agents/observability.py` is key-gated, so without them the
-service runs unchanged. `deploy.sh` injects the public key + host as env vars and
+service runs unchanged. Each answer also carries a **👍/👎** that writes a `user_feedback`
+score onto its trace (`/feedback`), turning live community traffic into *labeled* eval
+data; `deploy.sh` tags these with `LANGFUSE_TRACING_ENVIRONMENT=community` so they're
+filterable. `deploy.sh` injects the public key + host as env vars and
 reads the secret key from Secret Manager. Create that secret once (use a **rotated**
 key, not one you've shared):
 

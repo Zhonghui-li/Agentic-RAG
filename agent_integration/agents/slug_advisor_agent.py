@@ -123,13 +123,13 @@ def run_advisor(question: str, agent=None, verbose: bool = False,
                       "Please try rephrasing or narrowing your question.")
             trace = []
         tools_used = [t["tool"] for t in trace]
-        record(answer=answer, tools_used=tools_used, usage=usage, contexts=contexts)
+        trace_id = record(answer=answer, tools_used=tools_used, usage=usage, contexts=contexts)
 
     if verbose:
         for step in trace:
             print(f"  🔧 {step['tool']}({step['args']})")
 
-    return {"answer": answer, "trace": trace, "tools_used": tools_used}
+    return {"answer": answer, "trace": trace, "tools_used": tools_used, "trace_id": trace_id}
 
 
 if __name__ == "__main__":

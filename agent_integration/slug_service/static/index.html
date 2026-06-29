@@ -25,6 +25,12 @@
   .trace[open] summary { margin-bottom:6px; }
   .trace-body { padding-left:2px; line-height:1.7; }
   .trace code { background:#eef1f4; padding:1px 5px; border-radius:4px; }
+  .fb { margin-top:8px; display:flex; align-items:center; gap:6px; }
+  .fb button { background:#fff; border:1px solid #cfd6dd; border-radius:6px; padding:2px 8px;
+               font-size:14px; line-height:1.4; cursor:pointer; }
+  .fb button:hover:not(:disabled) { background:#eef1f4; }
+  .fb button:disabled { opacity:.45; cursor:default; }
+  .fb .fbmsg { font-size:12px; color:#3a8d4f; }
   .hint { color:#7a8896; font-size:13px; }
   form { max-width:760px; margin:0 auto; padding:0 18px 24px; display:flex; gap:8px; }
   input { flex:1; padding:12px 14px; border:1px solid #cfd6dd; border-radius:10px; font-size:15px; }
@@ -89,7 +95,21 @@ form.addEventListener('submit', async (e) => {
       html += '<details class="trace"><summary>🔧 ' + n + ' tool call' + (n > 1 ? 's' : '') +
               ' · show reasoning</summary><div class="trace-body">' + tools + '</div></details>';
     }
+    if (data.trace_id) {   // thumbs up/down -> Langfuse score, turning traffic into labeled eval data
+      html += '<div class="fb" data-tid="' + esc(data.trace_id) + '">' +
+              '<button class="fbup" type="button" title="Good answer">👍</button>' +
+              '<button class="fbdown" type="button" title="Inaccurate or unhelpful">👎</button>' +
+              '<span class="fbmsg"></span></div>';
+    }
     pending.querySelector('.bubble').innerHTML = html;
+    const fb = pending.querySelector('.fb');
+    if (fb) fb.querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
+      fb.querySelectorAll('button').forEach(x => x.disabled = true);
+      try { await fetch('/feedback', { method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ trace_id: fb.dataset.tid, value: b.classList.contains('fbup') ? 1 : 0,
+                question: question, answer: data.answer }) }); } catch(e){}
+      fb.querySelector('.fbmsg').textContent = ' Thanks — feedback recorded.';
+    }));
   } catch (err) {
     pending.querySelector('.bubble').innerHTML =
       '<span class="hint">Something went wrong. Please try again.</span>';
