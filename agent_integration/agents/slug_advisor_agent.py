@@ -12,6 +12,7 @@ the answer). Multi-hop prerequisite questions are handled by calling
 search_catalog repeatedly.
 """
 import os
+import re
 from typing import Dict, List
 
 from langchain_core.tools import tool
@@ -122,12 +123,28 @@ def _build_messages(question: str, history) -> List:
     return prior + [HumanMessage(question)]
 
 
+def _catalog_sources(answer: str, catalog_outputs: List[str]) -> List[Dict]:
+    """Deterministic citations: pull each course's official catalog URL out of the search_catalog
+    output, and return {course_code, url} for the courses the answer actually mentions — so the UI
+    can show clickable links (like the SEC agent's filing citations), not the model inventing them."""
+    seen = {}
+    for content in catalog_outputs:
+        for block in content.split("\n\n"):
+            mcode = re.match(r"\[([A-Z]{2,4} ?\w+)\]", block)
+            murl = re.search(r"catalog:\s*(https?://\S+?)\]", block)
+            if mcode and murl:
+                seen[mcode.group(1).strip()] = murl.group(1)
+    norm = lambda s: s.replace(" ", "").upper()
+    ans = norm(answer or "")
+    return [{"course_code": c, "url": u} for c, u in seen.items() if norm(c) in ans]
+
+
 def run_advisor(question: str, agent=None, history=None, verbose: bool = False,
                 recursion_limit: int = DEFAULT_RECURSION_LIMIT) -> Dict:
     """Run the agent on a question. `history` (optional) is prior turns [{role, content}, ...]
-    for multi-turn follow-ups. Returns {answer, trace, tools_used, trace_id}."""
+    for multi-turn follow-ups. Returns {answer, trace, tools_used, trace_id, sources}."""
     agent = agent or build_agent()
-    usage, contexts = None, []
+    usage, contexts, sources = None, [], []
     # the Langfuse span (if enabled) wraps the invoke so its duration is the real latency
     with observability.trace_agent(question) as record:
         try:
@@ -142,6 +159,9 @@ def run_advisor(question: str, agent=None, history=None, verbose: bool = False,
             # tool outputs = the grounding, stored for offline faithfulness scoring
             contexts = [m.content[:1500] for m in messages
                         if isinstance(m, ToolMessage)][:6]
+            cat_out = [m.content for m in messages if isinstance(m, ToolMessage)
+                       and getattr(m, "name", "") == "search_catalog"]
+            sources = _catalog_sources(answer, cat_out)
         except GraphRecursionError:
             answer = ("I wasn't able to resolve this within the step limit. "
                       "Please try rephrasing or narrowing your question.")
@@ -153,7 +173,8 @@ def run_advisor(question: str, agent=None, history=None, verbose: bool = False,
         for step in trace:
             print(f"  🔧 {step['tool']}({step['args']})")
 
-    return {"answer": answer, "trace": trace, "tools_used": tools_used, "trace_id": trace_id}
+    return {"answer": answer, "trace": trace, "tools_used": tools_used,
+            "trace_id": trace_id, "sources": sources}
 
 
 if __name__ == "__main__":

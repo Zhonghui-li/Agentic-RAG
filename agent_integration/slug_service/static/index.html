@@ -31,6 +31,9 @@
   .fb button:hover:not(:disabled) { background:#eef1f4; }
   .fb button:disabled { opacity:.45; cursor:default; }
   .fb .fbmsg { font-size:12px; color:#3a8d4f; }
+  .sources { margin-top:8px; font-size:12px; color:#5a6b7b; }
+  .sources a { color:var(--blue); text-decoration:none; }
+  .sources a:hover { text-decoration:underline; }
   .hint { color:#7a8896; font-size:13px; }
   form { max-width:760px; margin:0 auto; padding:0 18px 24px; display:flex; gap:8px; }
   input { flex:1; padding:12px 14px; border:1px solid #cfd6dd; border-radius:10px; font-size:15px; }
@@ -91,6 +94,11 @@ form.addEventListener('submit', async (e) => {
     history.push({ role:'user', content:question }, { role:'assistant', content:data.answer || '' });
     history = history.slice(-12);   // keep recent turns (matches backend trim)
     let html = esc(data.answer || '(no answer)');
+    if (data.sources && data.sources.length) {   // clickable links to the official UCSC catalog page
+      const links = data.sources.map(s => '<a href="' + s.url + '" target="_blank" rel="noopener">' +
+                    esc(s.course_code) + '</a>').join(' · ');
+      html += '<div class="sources">📎 Catalog: ' + links + '</div>';
+    }
     if (data.trace && data.trace.length) {
       const n = data.trace.length;
       const tools = data.trace.map(t =>
