@@ -19,9 +19,11 @@ from langfuse import get_client
 from eval.quality import score_quality
 
 
-def main(limit=50):
+def main(limit=50, environment=None):
     lf = get_client()
-    summaries = lf.api.trace.list(limit=limit).data
+    # scope to one deployment environment (e.g. 'community') so a shared project's dev/other-agent
+    # traces aren't scored by this agent's scorer; None = all environments.
+    summaries = lf.api.trace.list(limit=limit, environment=environment).data
 
     items, ids = [], []
     for s in summaries:
@@ -63,4 +65,7 @@ def main(limit=50):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=50)
-    raise SystemExit(main(ap.parse_args().limit))
+    ap.add_argument("--environment", default=None,
+                    help="only score traces from this deployment environment (e.g. 'community')")
+    args = ap.parse_args()
+    raise SystemExit(main(args.limit, args.environment))
