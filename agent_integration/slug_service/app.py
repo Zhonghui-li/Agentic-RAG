@@ -63,7 +63,7 @@ def advisor(q: Query, request: Request):
         # public testing: an LLM/timeout error should be a friendly message, not a 500
         print(f"[/advisor] agent error: {type(e).__name__}: {e}")
         return {"answer": "Sorry — I hit an error answering that. Please try again in a moment.",
-                "trace": [], "tools_used": [], "trace_id": None}
+                "trace": [], "tools_used": [], "trace_id": None, "sources": []}
 
 
 class Feedback(BaseModel):

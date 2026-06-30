@@ -91,5 +91,7 @@ def search_catalog(query: str, k: int = 4) -> str:
     for d in docs:
         score = d.metadata.get("rerank_score")
         tag = f" (relevance {score:.2f})" if isinstance(score, float) else ""
-        out.append(f"[{d.metadata.get('course_code', '?')}]{tag}\n{d.page_content}")
+        url = d.metadata.get("url", "")
+        src = f"\n[catalog: {url}]" if url else ""
+        out.append(f"[{d.metadata.get('course_code', '?')}]{tag}\n{d.page_content}{src}")
     return "\n\n".join(out)
